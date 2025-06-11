@@ -6,6 +6,10 @@ const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
 // Single file upload under field name "file"
-router.post("/", upload.single("file"), compressController.handleCompression);
+router.post(
+  "/api",
+  upload.single("file"),
+  compressController.handleCompression
+);
 
 export default router;

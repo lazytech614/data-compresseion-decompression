@@ -4,7 +4,7 @@ import { algos } from "../constants/algos";
 
 const router = express.Router();
 
-router.get("/", (req, res) => {
+router.get("/api", (req, res) => {
   return res.json({ status: 200, data: algos });
 });
 
