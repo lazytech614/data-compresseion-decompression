@@ -1,103 +1,133 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import FileUploader from '../components/global/file-uploader';
+import AlgorithmSelector from '../components/global/algorithm-selector';
+import { postCompression, postDecompression, fetchAlgorithms } from '../../utils/api';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [file, setFile] = useState(null);
+  const [algorithms, setAlgorithms] = useState([]);
+  const [selectedAlgo, setSelectedAlgo] = useState('');
+  const [mode, setMode] = useState('compress'); // or "decompress"
+  const [metadataInput, setMetadataInput] = useState(''); // for Huffman metadata (stringified JSON)
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  useEffect(() => {
+    // Fetch algorithm list (with descriptions)
+    fetchAlgorithms()
+      .then((list) => {
+        setAlgorithms(list);
+        if (list.length > 0) setSelectedAlgo(list[0].id);
+      })
+      .catch((err) => console.error(err));
+  }, []);
+
+  //TODO: update the type
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+    if (!file || !selectedAlgo) return alert('Choose a file and algorithm.');
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('algorithm', selectedAlgo);
+    if (mode === 'decompress' && metadataInput) {
+      formData.append('metadata', metadataInput);
+    }
+
+    setLoading(true);
+    try {
+      let data;
+      if (mode === 'compress') {
+        data = await postCompression(formData);
+      } else {
+        data = await postDecompression(formData);
+      }
+      setLoading(false);
+
+      const params = new URLSearchParams({
+        mode,
+        algorithm: selectedAlgo,
+        fileName: data.fileName,
+        stats: JSON.stringify(data.stats),
+        base64: data[
+          mode === 'compress' ? 'compressedBase64' : 'decompressedBase64'
+        ],
+        metadata: data.metadata ? JSON.stringify(data.metadata) : '',
+      });
+
+      // Navigate to result page, passing data as query or via state
+      router.push(`/result?${params.toString()}`);
+    } catch (err) {
+      console.error(err);
+      setLoading(false);
+      alert('Error while processing. See console.');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
+      <h1 className="text-3xl font-semibold mb-6">Data Compression & Decompression Portal</h1>
+      <form onSubmit={handleSubmit} className="w-full max-w-md bg-white p-6 rounded-lg shadow">
+        <div className="mb-4">
+          <label className="inline-flex items-center">
+            <input
+              type="radio"
+              className="form-radio"
+              name="mode"
+              value="compress"
+              checked={mode === 'compress'}
+              onChange={() => setMode('compress')}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <span className="ml-2">Compress</span>
+          </label>
+          <label className="inline-flex items-center ml-6">
+            <input
+              type="radio"
+              className="form-radio"
+              name="mode"
+              value="decompress"
+              checked={mode === 'decompress'}
+              onChange={() => setMode('decompress')}
+            />
+            <span className="ml-2">Decompress</span>
+          </label>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+
+        {/* TODO: update the type */}
+        <FileUploader onFileSelect={(f: any) => setFile(f)} />
+
+        <AlgorithmSelector
+          algorithms={algorithms}
+          selected={selectedAlgo}
+          onChange={setSelectedAlgo}
+        />
+
+        {mode === 'decompress' && selectedAlgo === 'huffman' && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Huffman Metadata (JSON):
+            </label>
+            <textarea
+              className="w-full border border-gray-300 rounded px-2 py-1"
+              rows={3}
+              value={metadataInput}
+              onChange={(e) => setMetadataInput(e.target.value)}
+              placeholder='eg: {"freqTable": {"a":5,"b":3,…}}'
+            />
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          {loading ? 'Processing...' : mode === 'compress' ? 'Compress File' : 'Decompress File'}
+        </button>
+      </form>
     </div>
   );
 }
