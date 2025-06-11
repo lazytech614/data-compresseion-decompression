@@ -24,7 +24,6 @@ export default function Home() {
   const [algorithms, setAlgorithms] = useState<{ id: string; desc: string }[]>([]);
   const [selectedAlgo, setSelectedAlgo] = useState<string>('');
   const [mode, setMode] = useState<'compress' | 'decompress'>('compress');
-  const [metadataInput, setMetadataInput] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -48,8 +47,17 @@ export default function Home() {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('algorithm', selectedAlgo);
-    if (mode === 'decompress' && metadataInput) {
-      formData.append('metadata', metadataInput);
+
+    if (mode === 'decompress') {
+      const stored = localStorage.getItem('compressionResult');
+      if (!stored) {
+        return alert('No metadata found in localStorage.');
+      }
+      const parsed = JSON.parse(stored);
+      if (!parsed.metadata) {
+        return alert('No metadata available in stored result.');
+      }
+      formData.append('metadata', JSON.stringify(parsed.metadata));
     }
 
     setLoading(true);
@@ -59,7 +67,6 @@ export default function Home() {
           ? await postCompression(formData)
           : await postDecompression(formData);
 
-      // Store the full result in localStorage
       localStorage.setItem('compressionResult', JSON.stringify({ 
         mode, 
         ...data 
@@ -111,21 +118,6 @@ export default function Home() {
             selected={selectedAlgo}
             onChange={setSelectedAlgo}
           />
-        )}
-
-        {mode === 'decompress' && selectedAlgo === 'huffman' && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Huffman Metadata (JSON):
-            </label>
-            <textarea
-              rows={3}
-              className="w-full border border-gray-300 rounded px-2 py-1"
-              placeholder='e.g. {"freqTable": {"a":5,"b":3,…}}'
-              value={metadataInput}
-              onChange={(e) => setMetadataInput(e.target.value)}
-            />
-          </div>
         )}
 
         <button
