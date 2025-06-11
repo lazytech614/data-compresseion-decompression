@@ -1,40 +1,49 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import FileUploader from '../components/global/file-uploader';
 import AlgorithmSelector from '../components/global/algorithm-selector';
 import { postCompression, postDecompression, fetchAlgorithms } from '../../utils/api';
 
+interface ApiResult {
+  fileName: string;
+  stats: {
+    originalSize: number;
+    newSize: number;
+    compressionRatio: number;
+    timeMs: number;
+  };
+  compressedBase64?: string;
+  decompressedBase64?: string;
+  metadata?: any;
+}
+
 export default function Home() {
-  const [file, setFile] = useState(null);
-  const [algorithms, setAlgorithms] = useState<{
-    status: number
-    data: {
-      id: string
-      desc: string
-    }[]
-  } | null>(null);
-  const [selectedAlgo, setSelectedAlgo] = useState('');
-  const [mode, setMode] = useState('compress'); // or "decompress"
-  const [metadataInput, setMetadataInput] = useState(''); // for Huffman metadata (stringified JSON)
+  const [file, setFile] = useState<File | null>(null);
+  const [algorithms, setAlgorithms] = useState<{ id: string; desc: string }[]>([]);
+  const [selectedAlgo, setSelectedAlgo] = useState<string>('');
+  const [mode, setMode] = useState<'compress' | 'decompress'>('compress');
+  const [metadataInput, setMetadataInput] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    // Fetch algorithm list (with descriptions)
     fetchAlgorithms()
-      .then((list) => {
-        setAlgorithms(list);
-        if (list.length > 0) setSelectedAlgo(list[0].id);
+      .then((resp) => {
+        setAlgorithms(resp.data);
+        if (resp.data.length > 0) {
+          setSelectedAlgo(resp.data[0].id);
+        }
       })
-      .catch((err) => console.error(err));
+      .catch(console.error);
   }, []);
 
-  //TODO: update the type
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!file || !selectedAlgo) return alert('Choose a file and algorithm.');
+    if (!file || !selectedAlgo) {
+      return alert('Choose a file and algorithm.');
+    }
 
     const formData = new FormData();
     formData.append('file', file);
@@ -45,31 +54,23 @@ export default function Home() {
 
     setLoading(true);
     try {
-      let data;
-      if (mode === 'compress') {
-        data = await postCompression(formData);
-      } else {
-        data = await postDecompression(formData);
-      }
-      setLoading(false);
+      const data: ApiResult =
+        mode === 'compress'
+          ? await postCompression(formData)
+          : await postDecompression(formData);
 
-      const params = new URLSearchParams({
-        mode,
-        algorithm: selectedAlgo,
-        fileName: data.fileName,
-        stats: JSON.stringify(data.stats),
-        base64: data[
-          mode === 'compress' ? 'compressedBase64' : 'decompressedBase64'
-        ],
-        metadata: data.metadata ? JSON.stringify(data.metadata) : '',
-      });
+      // Store the full result in localStorage
+      localStorage.setItem('compressionResult', JSON.stringify({ 
+        mode, 
+        ...data 
+      }));
 
-      // Navigate to result page, passing data as query or via state
-      router.push(`/result?${params.toString()}`);
+      router.push('/result');
     } catch (err) {
       console.error(err);
-      setLoading(false);
       alert('Error while processing. See console.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -81,35 +82,34 @@ export default function Home() {
           <label className="inline-flex items-center">
             <input
               type="radio"
-              className="form-radio"
               name="mode"
               value="compress"
               checked={mode === 'compress'}
               onChange={() => setMode('compress')}
+              className="form-radio"
             />
             <span className="ml-2">Compress</span>
           </label>
           <label className="inline-flex items-center ml-6">
             <input
               type="radio"
-              className="form-radio"
               name="mode"
               value="decompress"
               checked={mode === 'decompress'}
               onChange={() => setMode('decompress')}
+              className="form-radio"
             />
             <span className="ml-2">Decompress</span>
           </label>
         </div>
 
-        {/* TODO: update the type */}
         <FileUploader onFileSelect={(f: any) => setFile(f)} />
 
-        {algorithms && algorithms.data.length > 0 && (
+        {algorithms.length > 0 && (
           <AlgorithmSelector
-            algorithms={algorithms.data}
+            algorithms={algorithms}
             selected={selectedAlgo}
-            onChange={(algoId: any) => setSelectedAlgo(algoId)}
+            onChange={setSelectedAlgo}
           />
         )}
 
@@ -119,11 +119,11 @@ export default function Home() {
               Huffman Metadata (JSON):
             </label>
             <textarea
-              className="w-full border border-gray-300 rounded px-2 py-1"
               rows={3}
+              className="w-full border border-gray-300 rounded px-2 py-1"
+              placeholder='e.g. {"freqTable": {"a":5,"b":3,…}}'
               value={metadataInput}
               onChange={(e) => setMetadataInput(e.target.value)}
-              placeholder='eg: {"freqTable": {"a":5,"b":3,…}}'
             />
           </div>
         )}
@@ -133,7 +133,11 @@ export default function Home() {
           disabled={loading}
           className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
         >
-          {loading ? 'Processing...' : mode === 'compress' ? 'Compress File' : 'Decompress File'}
+          {loading
+            ? 'Processing...'
+            : mode === 'compress'
+            ? 'Compress File'
+            : 'Decompress File'}
         </button>
       </form>
     </div>

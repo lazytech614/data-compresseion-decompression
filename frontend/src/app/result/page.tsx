@@ -1,61 +1,107 @@
 "use client";
 
-import { useSearchParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import StatsDisplay from '../../components/global/stats-display';
-import DownloadButton from '../../components/global/download-button';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
-export default function Result() {
+interface Stats {
+  originalSize: number;
+  newSize: number;
+  compressionRatio: number;
+  timeMs: number;
+}
+
+interface StoredResult {
+  mode: "compress" | "decompress";
+  fileName: string;
+  stats: Stats;
+  compressedBase64?: string;
+  decompressedBase64?: string;
+  metadata?: any;
+}
+
+export default function ResultPage() {
   const router = useRouter();
-  const params = useSearchParams();
-
-  // read each param as a string (or null)
-  const mode = params.get('mode') ?? '';
-  const algorithm = params.get('algorithm') ?? '';
-  const fileName = params.get('fileName') ?? '';
-  const statsParam = params.get('stats') ?? '';
-  const base64 = params.get('base64') ?? '';
-  const metadata = params.get('metadata') ?? '';
-
-  const [parsedStats, setParsedStats] = useState<Record<string, any> | null>(null);
+  const [result, setResult] = useState<StoredResult | null>(null);
 
   useEffect(() => {
-    if (statsParam) {
-      try {
-        setParsedStats(JSON.parse(statsParam));
-      } catch (e) {
-        console.error('Failed to parse stats JSON:', e);
+    try {
+      const json = localStorage.getItem("compressionResult");
+      if (!json) {
+        router.replace("/");
+        return;
       }
+      const data: StoredResult = JSON.parse(json);
+      setResult(data);
+      // Optionally clear it so reloading won't persist old data:
+      // localStorage.removeItem("compressionResult");
+    } catch {
+      router.replace("/");
     }
-  }, [statsParam]);
+  }, [router]);
 
-  if (!parsedStats || !base64) {
-    return <p className="text-center p-8">Loading results...</p>;
+  if (!result) {
+    return (
+      <div className="p-8 text-center">
+        <p>Loading results…</p>
+      </div>
+    );
   }
 
-  const downloadFileName = `${mode === 'compress' ? 'compressed' : 'decompressed'}_${fileName}`;
+  const { mode, fileName, stats, compressedBase64, decompressedBase64 } = result;
+  const payloadBase64 =
+    mode === "compress" ? compressedBase64 : decompressedBase64;
+  const downloadName = `${mode === "compress" ? "compressed" : "decompressed"}_${fileName}`;
+
+  const handleDownload = () => {
+    if (!payloadBase64) return;
+    const link = document.createElement("a");
+    link.href = `data:application/octet-stream;base64,${payloadBase64}`;
+    link.download = downloadName;
+    link.click();
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center pt-12 px-4 bg-gray-50">
       <h2 className="text-2xl font-semibold mb-6">
-        {mode === 'compress' ? 'Compression' : 'Decompression'} Results
+        {mode === "compress" ? "Compression" : "Decompression"} Results
       </h2>
 
-      <StatsDisplay stats={parsedStats} />
-
-      <DownloadButton
-        base64={base64}
-        fileName={downloadFileName}
-      />
-
-      <div className="mt-8">
-        <button
-          className="text-blue-600 underline"
-          onClick={() => router.push('/')}
-        >
-          &larr; Compress/Decompress Another File
-        </button>
+      <div className="w-full max-w-md bg-white p-6 rounded-lg shadow mb-6">
+        <table className="w-full text-left">
+          <tbody>
+            <tr>
+              <td className="py-1">Original Size:</td>
+              <td className="py-1 font-medium">{stats.originalSize} bytes</td>
+            </tr>
+            <tr>
+              <td className="py-1">New Size:</td>
+              <td className="py-1 font-medium">{stats.newSize} bytes</td>
+            </tr>
+            <tr>
+              <td className="py-1">Compression Ratio:</td>
+              <td className="py-1 font-medium">{stats.compressionRatio}</td>
+            </tr>
+            <tr>
+              <td className="py-1">Time Taken:</td>
+              <td className="py-1 font-medium">{stats.timeMs} ms</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
+
+      <button
+        onClick={handleDownload}
+        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+      >
+        Download {downloadName}
+      </button>
+
+      <button
+        onClick={() => router.push("/")}
+        className="mt-6 text-blue-600 underline"
+      >
+        &larr; Compress/Decompress Another File
+      </button>
     </div>
   );
 }
