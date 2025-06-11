@@ -9,9 +9,7 @@ import {
   UserButton,
 } from '@clerk/nextjs'
 
-type Props = {}
-
-const GlobalHeader = (props: Props) => {
+const GlobalHeader = () => {
   return (
     <div className='bg-[var(--accent)] h-[4rem] px-6 sm:px-20 flex items-center justify-between text-white'>
       <div>

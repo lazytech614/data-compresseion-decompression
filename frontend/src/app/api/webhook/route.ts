@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Webhook } from 'svix';
 import { headers } from 'next/headers';
-import { buffer } from 'micro';
 
 import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
