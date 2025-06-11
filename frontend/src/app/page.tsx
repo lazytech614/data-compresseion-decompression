@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import FileUploader from '../components/global/file-uploader';
 import AlgorithmSelector from '../components/global/algorithm-selector';
 import { postCompression, postDecompression, fetchAlgorithms } from '../../utils/api';
+import { ThemeToggle } from '@/components/global/theme/toggle-button';
 
 interface ApiResult {
   fileName: string;
@@ -91,9 +92,10 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
-      <h1 className="text-3xl font-semibold mb-6">Data Compression & Decompression Portal</h1>
-      <form onSubmit={handleSubmit} className="w-full max-w-md bg-white p-6 rounded-lg shadow">
+    <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center bg-[var(--bg-dark)] text-[var(--text-light)] px-4">
+      {/* <ThemeToggle /> */}
+      <h1 className="text-3xl font-semibold mb-6 text-[#F8F6FF]">Data Compression & Decompression Portal</h1>
+      <form onSubmit={handleSubmit} className="w-full max-w-md bg-[var(--card-dark)] text-[var(--text-light)] p-6 rounded-lg shadow">
         <div className="mb-4">
           <label className="inline-flex items-center">
             <input
@@ -153,7 +155,7 @@ export default function Home() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+          className="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white py-2 rounded  transition"
         >
           {loading
             ? 'Processing...'

@@ -3,7 +3,7 @@
 export default function AlgorithmSelector({ algorithms, selected, onChange }: any) {
   return (
     <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-700 mb-1">Choose Algorithm:</label>
+      <label className="block text-sm font-medium text-[var(--text-light)] mb-1">Choose Algorithm:</label>
       <select
         value={selected}
         onChange={(e) => onChange(e.target.value)}

@@ -13,7 +13,7 @@ export default function FileUploader({ onFileSelect }: any) {
 
   return (
     <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-700 mb-1">Select File:</label>
+      <label className="block text-sm font-medium text-[var(--text-light)] mb-1">Select File:</label>
       <input
         type="file"
         ref={fileInputRef}
