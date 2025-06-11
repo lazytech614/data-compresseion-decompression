@@ -1,11 +1,15 @@
 import fs from "fs";
-import path from "path";
+import path, { dirname } from "path";
+import { fileURLToPath } from "url";
 
 import { compress as huffmanCompress } from "../algorithms/huffman.js";
 import { compress as rleCompress } from "../algorithms/rle.js";
 import { compress as lz77Compress } from "../algorithms/lz77.js";
 
 import { calculateStats } from "../utils/statsCalculator.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export default async function handleCompression(req, res) {
   try {
