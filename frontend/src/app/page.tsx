@@ -8,7 +8,13 @@ import { postCompression, postDecompression, fetchAlgorithms } from '../../utils
 
 export default function Home() {
   const [file, setFile] = useState(null);
-  const [algorithms, setAlgorithms] = useState([]);
+  const [algorithms, setAlgorithms] = useState<{
+    status: number
+    data: {
+      id: string
+      desc: string
+    }[]
+  } | null>(null);
   const [selectedAlgo, setSelectedAlgo] = useState('');
   const [mode, setMode] = useState('compress'); // or "decompress"
   const [metadataInput, setMetadataInput] = useState(''); // for Huffman metadata (stringified JSON)
@@ -99,11 +105,13 @@ export default function Home() {
         {/* TODO: update the type */}
         <FileUploader onFileSelect={(f: any) => setFile(f)} />
 
-        <AlgorithmSelector
-          algorithms={algorithms}
-          selected={selectedAlgo}
-          onChange={setSelectedAlgo}
-        />
+        {algorithms && algorithms.data.length > 0 && (
+          <AlgorithmSelector
+            algorithms={algorithms.data}
+            selected={selectedAlgo}
+            onChange={(algoId: any) => setSelectedAlgo(algoId)}
+          />
+        )}
 
         {mode === 'decompress' && selectedAlgo === 'huffman' && (
           <div className="mb-4">
