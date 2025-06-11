@@ -1,15 +1,15 @@
 import express from "express";
 import multer from "multer";
-import compressController from "../controllers/compressController";
+import compressController from "../controllers/compressController.js";
 
-const router = express.Router();
+const compressRouter = express.Router();
 const upload = multer({ dest: "uploads/" });
 
 // Single file upload under field name "file"
-router.post(
+compressRouter.post(
   "/api",
   upload.single("file"),
   compressController.handleCompression
 );
 
-export default router;
+export default compressRouter;

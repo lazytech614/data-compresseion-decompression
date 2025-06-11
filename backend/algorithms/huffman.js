@@ -2,7 +2,7 @@ import {
   buildFrequencyTable,
   buildHuffmanTree,
   generateCodes,
-} from "./huffmanUtils.js";
+} from "../utils/huffmanUtils.js";
 
 function compress(inputBuffer) {
   // 1. Convert buffer to string or array of bytes

@@ -1,12 +1,11 @@
 import fs from "fs";
 import path from "path";
-import { performence } from "perf_hooks";
 
-import { compress as huffmanCompress } from "../algorithms/huffman";
-import { compress as rleCompress } from "../algorithms/rle";
-import { compress as lz77Compress } from "../algorithms/lz77";
+import { compress as huffmanCompress } from "../algorithms/huffman.js";
+import { compress as rleCompress } from "../algorithms/rle.js";
+import { compress as lz77Compress } from "../algorithms/lz77.js";
 
-const statsCalculator = require("../utils/statsCalculator");
+import { calculateStats } from "../utils/statsCalculator.js";
 
 export default async function handleCompression(req, res) {
   try {
@@ -50,7 +49,7 @@ export default async function handleCompression(req, res) {
 
     // Calculate stats
     const compressedSize = result.compressedBuffer.length;
-    const stats = statsCalculator(originalSize, compressedSize, timeTakenMs);
+    const stats = calculateStats(originalSize, compressedSize, timeTakenMs);
 
     // Respond with JSON (stats + file URL). For simplicity, send base64 in response:
     const compressedBase64 = result.compressedBuffer.toString("base64");

@@ -1,11 +1,11 @@
 import express from "express";
 
-import { algos } from "../constants/algos";
+import { algos } from "../constants/algos.js";
 
-const router = express.Router();
+const algoRouter = express.Router();
 
-router.get("/api", (req, res) => {
+algoRouter.get("/", (req, res) => {
   return res.json({ status: 200, data: algos });
 });
 
-export default router;
+export default algoRouter;
