@@ -25,13 +25,18 @@ export default function ResultPage() {
 
   useEffect(() => {
     try {
-      const json = localStorage.getItem("compressionResult");
+      const json = localStorage.getItem("compressionResults");
       if (!json) {
         router.replace("/");
         return;
       }
-      const data: StoredResult = JSON.parse(json);
-      setResult(data);
+      const allResults: StoredResult[] = JSON.parse(json);
+      const latestResult = allResults[allResults.length - 1];
+      if (!latestResult) {
+        router.replace("/");
+        return;
+      }
+      setResult(latestResult);
       // Optionally clear it so reloading won't persist old data:
       // localStorage.removeItem("compressionResult");
     } catch {

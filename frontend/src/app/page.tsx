@@ -17,6 +17,7 @@ interface ApiResult {
   compressedBase64?: string;
   decompressedBase64?: string;
   metadata?: any;
+  mode?: 'compress' | 'decompress';
 }
 
 export default function Home() {
@@ -25,6 +26,8 @@ export default function Home() {
   const [selectedAlgo, setSelectedAlgo] = useState<string>('');
   const [mode, setMode] = useState<'compress' | 'decompress'>('compress');
   const [loading, setLoading] = useState(false);
+  const [savedResults, setSavedResults] = useState<ApiResult[]>([]);
+  const [selectedMetadataFile, setSelectedMetadataFile] = useState<string>('');
   const router = useRouter();
 
   useEffect(() => {
@@ -38,6 +41,17 @@ export default function Home() {
       .catch(console.error);
   }, []);
 
+  useEffect(() => {
+    const stored = localStorage.getItem('compressionResults');
+    if (stored) {
+      const parsed: ApiResult[] = JSON.parse(stored);
+      setSavedResults(parsed);
+      if (parsed.length > 0) {
+        setSelectedMetadataFile(parsed[0].fileName);
+      }
+    }
+  }, [mode]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!file || !selectedAlgo) {
@@ -49,15 +63,11 @@ export default function Home() {
     formData.append('algorithm', selectedAlgo);
 
     if (mode === 'decompress') {
-      const stored = localStorage.getItem('compressionResult');
-      if (!stored) {
-        return alert('No metadata found in localStorage.');
+      const selected = savedResults.find((r) => r.fileName === selectedMetadataFile);
+      if (!selected || !selected.metadata) {
+        return alert('No metadata found for selected file.');
       }
-      const parsed = JSON.parse(stored);
-      if (!parsed.metadata) {
-        return alert('No metadata available in stored result.');
-      }
-      formData.append('metadata', JSON.stringify(parsed.metadata));
+      formData.append('metadata', JSON.stringify(selected.metadata));
     }
 
     setLoading(true);
@@ -67,10 +77,9 @@ export default function Home() {
           ? await postCompression(formData)
           : await postDecompression(formData);
 
-      localStorage.setItem('compressionResult', JSON.stringify({ 
-        mode, 
-        ...data 
-      }));
+      const previousResults = JSON.parse(localStorage.getItem('compressionResults') || '[]');
+      previousResults.push({ mode, ...data });
+      localStorage.setItem('compressionResults', JSON.stringify(previousResults));
 
       router.push('/result');
     } catch (err) {
@@ -118,6 +127,27 @@ export default function Home() {
             selected={selectedAlgo}
             onChange={setSelectedAlgo}
           />
+        )}
+
+        {mode === 'decompress' && savedResults.length > 0 && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Select Metadata File:
+            </label>
+            <select
+              value={selectedMetadataFile}
+              onChange={(e) => setSelectedMetadataFile(e.target.value)}
+              className="w-full border border-gray-300 rounded px-2 py-1"
+            >
+              {savedResults
+                .filter((r) => r.mode === 'compress' && r.metadata)
+                .map((r) => (
+                  <option key={r.fileName} value={r.fileName}>
+                    {r.fileName}
+                  </option>
+                ))}
+            </select>
+          </div>
         )}
 
         <button
