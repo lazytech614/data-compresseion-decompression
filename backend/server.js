@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import algoRouter from "./routes/algorithms.js";
 import compressRouter from "./routes/compress.js";
+import decompressRouter from "./routes/decompress.js";
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(
 
 app.use("/api/algorithms", algoRouter);
 app.use("/api/compress", compressRouter);
+app.use("/api/decompress", decompressRouter);
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);

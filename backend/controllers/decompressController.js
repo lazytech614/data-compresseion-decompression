@@ -6,7 +6,7 @@ import { decompress as huffmanDecompress } from "../algorithms/huffman.js";
 import { decompress as rleDecompress } from "../algorithms/rle.js";
 import { decompress as lz77Decompress } from "../algorithms/lz77.js";
 
-import statsCalculator from "../utils/statsCalculator.js";
+import { calculateStats } from "../utils/statsCalculator.js";
 
 export default async function handleDecompression(req, res) {
   try {
@@ -50,7 +50,7 @@ export default async function handleDecompression(req, res) {
     );
     fs.writeFileSync(decompressedPath, decompressedBuffer);
 
-    const stats = statsCalculator(
+    const stats = calculateStats(
       decompressedSize,
       compressedSize,
       timeTakenMs,
