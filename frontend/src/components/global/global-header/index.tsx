@@ -1,6 +1,14 @@
 import { navLinks } from '@/constants/nav-links'
 import Link from 'next/link'
 import React from 'react'
+import {
+  ClerkProvider,
+  SignInButton,
+  SignUpButton,
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from '@clerk/nextjs'
 
 type Props = {}
 
@@ -14,6 +22,17 @@ const GlobalHeader = (props: Props) => {
         {navLinks.map((link) => (
           <Link href={link.href} key={link.name} className='mx-4'>{link.name}</Link>
         ))}
+      </div>
+      <div>
+        <SignedOut>
+          <div className='flex gap-x-2'>
+            <SignInButton />
+            <SignUpButton />
+          </div>
+        </SignedOut>
+        <SignedIn>
+          <UserButton />
+        </SignedIn>
       </div>
     </div>
   )
