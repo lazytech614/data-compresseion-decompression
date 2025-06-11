@@ -2,7 +2,6 @@ import { navLinks } from '@/constants/nav-links'
 import Link from 'next/link'
 import React from 'react'
 import {
-  ClerkProvider,
   SignInButton,
   SignUpButton,
   SignedIn,
