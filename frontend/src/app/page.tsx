@@ -1,11 +1,26 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from 'react';
+import { 
+  useState, 
+  useEffect, 
+  FormEvent 
+} from 'react';
 import { useRouter } from 'next/navigation';
+
 import FileUploader from '../components/global/file-uploader';
 import AlgorithmSelector from '../components/global/algorithm-selector';
-import { postCompression, postDecompression, fetchAlgorithms } from '../../utils/api';
-import { ThemeToggle } from '@/components/global/theme/toggle-button';
+import { 
+  postCompression, 
+  postDecompression, 
+  fetchAlgorithms 
+} from '../../utils/api';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 
 interface ApiResult {
   fileName: string;
@@ -133,22 +148,26 @@ export default function Home() {
 
         {mode === 'decompress' && savedResults.length > 0 && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--text-light)] mb-1">
               Select Metadata File:
             </label>
-            <select
+            <Select
               value={selectedMetadataFile}
-              onChange={(e) => setSelectedMetadataFile(e.target.value)}
-              className="w-full border border-gray-300 rounded px-2 py-1"
+              onValueChange={(e) => setSelectedMetadataFile(e)}
             >
-              {savedResults
+              <SelectTrigger className="w-full px-2 py-1">
+                <SelectValue placeholder="Select a file" />
+              </SelectTrigger>
+              <SelectContent>
+                {savedResults
                 .filter((r) => r.mode === 'compress' && r.metadata)
                 .map((r) => (
-                  <option key={r.fileName} value={r.fileName}>
+                  <SelectItem key={r.fileName} value={r.fileName}>
                     {r.fileName}
-                  </option>
+                  </SelectItem>
                 ))}
-            </select>
+              </SelectContent>
+            </Select>
           </div>
         )}
 
