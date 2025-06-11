@@ -1,9 +1,23 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
+import { unique } from 'next/dist/build/utils';
 
-const UserSchema = new mongoose.Schema({
-  clerkId: String,
-  email: String,
-  name: String,
-}, { timestamps: true });
+export interface IUser extends Document {
+  clerkId: string;
+  email: string;
+  name: string;
+  userName: string;
+  imageUrl?: string;
+}
 
-export default mongoose.models.User || mongoose.model('User', UserSchema);
+const UserSchema: Schema = new Schema(
+  {
+    clerkId: { type: String, required: true, unique: true },
+    email: { type: String, required: true },
+    name: { type: String, required: true },
+    userName: { type: String, required: true, unique: true },
+    imageUrl: { type: String },
+  },
+  { timestamps: true }
+);
+
+export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
