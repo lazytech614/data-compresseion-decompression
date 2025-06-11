@@ -1,5 +1,3 @@
-// utils/huffmanUtils.js
-
 class Node {
   constructor(char, freq, left = null, right = null) {
     this.char = char;
