@@ -2,6 +2,7 @@ import {
   buildFrequencyTable,
   buildHuffmanTree,
   generateCodes,
+  invertCodes,
 } from "../utils/huffmanUtils.js";
 
 function compress(inputBuffer) {

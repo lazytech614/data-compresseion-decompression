@@ -1,5 +1,6 @@
 import fs from "fs";
-import path from "path";
+import path, { dirname } from "path";
+import { fileURLToPath } from "url";
 import { performance } from "perf_hooks";
 
 import { decompress as huffmanDecompress } from "../algorithms/huffman.js";
@@ -7,6 +8,9 @@ import { decompress as rleDecompress } from "../algorithms/rle.js";
 import { decompress as lz77Decompress } from "../algorithms/lz77.js";
 
 import { calculateStats } from "../utils/statsCalculator.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export default async function handleDecompression(req, res) {
   try {
