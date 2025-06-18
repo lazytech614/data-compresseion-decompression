@@ -1,14 +1,28 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Button } from '@/components/ui/button';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
 
-const UsageChart = ({ data }: any) => {
+// Helper: convert a byte count into KB/MB/GB with 1 decimal place
+function formatMB(x: number) {
+  return x.toFixed(1) + " MB";
+}
+
+const UsageChart = ({ data }: { data: Array<{ date: string; compressions: number; dataProcessed: number }> }) => {
   return (
     <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 mb-8">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-white">Usage Analytics</h3>
         <div className="flex items-center space-x-2">
-          <button className="text-slate-400 hover:text-white text-sm">7 days</button>
-          <button className="bg-blue-600 text-white text-sm px-3 py-1 rounded-md">30 days</button>
-          <button className="text-slate-400 hover:text-white text-sm">90 days</button>
+          <Button className="text-slate-400 hover:text-white text-sm">7 days</Button>
+          <Button className="bg-blue-600 text-white text-sm px-3 py-1 rounded-md">30 days</Button>
+          <Button className="text-slate-400 hover:text-white text-sm">90 days</Button>
         </div>
       </div>
       <div className="h-80">
@@ -19,16 +33,31 @@ const UsageChart = ({ data }: any) => {
               dataKey="date" 
               stroke="#9CA3AF"
               tick={{ fontSize: 12 }}
-              tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              tickFormatter={(date) =>
+                new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+              }
             />
-            <YAxis stroke="#9CA3AF" tick={{ fontSize: 12 }} />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: '#1F2937', 
+            <YAxis
+              stroke="#9CA3AF"
+              tick={{ fontSize: 12 }}
+              // format the y-axis ticks
+              tickFormatter={formatMB}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: '#1F2937',
                 border: '1px solid #374151',
                 borderRadius: '8px',
-                color: '#F9FAFB'
               }}
+              // format values inside tooltip
+              formatter={(value, name) =>
+                name === "dataProcessed"
+                  ? [`${(value as number).toFixed(1)} MB`, "Data Processed"]
+                  : [value, "Compressions"]
+              }
+              labelFormatter={(label: string) =>
+                new Date(label).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+              }
             />
             <Line 
               type="monotone" 

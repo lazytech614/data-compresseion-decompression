@@ -6,6 +6,7 @@ import UsageChart            from "./_components/usage-chart";
 import RecentJobs            from "./_components/recent-jobs";
 import CompressionTypesChart from "./_components/compression-types-chart";
 import QuickActions           from "./_components/quick-actions";
+import { FILE_TYPE_COLORS } from "@/constants/pie-chart-colors";
 
 interface JobRecord {
   id: string;
@@ -15,6 +16,7 @@ interface JobRecord {
   compressedSize?: number;
   compressionRatio?: number;
   startTime: string;
+  inputFiles: any[];
   endTime?: string;
   duration?: number;
 }
@@ -41,10 +43,6 @@ export default function DashboardOverview() {
     (async () => {
       setLoading(true);
       try {
-        // a) we don't actually use /api/user for stats, so skip
-        //    fetch("/api/user");
-
-        // b) fetch all compression jobs
         const res = await fetch("/api/compression-jobs");
         const { jobs: fetchedJobs } = await res.json();
         setJobs(fetchedJobs);
@@ -57,45 +55,81 @@ export default function DashboardOverview() {
   }, []);
 
   // 2) Derive usageData from jobs
-  const usageData: UsagePoint[] = useMemo(() => {
-    const bucket: Record<string, UsagePoint> = {};
+  function parseToISO(dateStr: string) {
+    const [day, month, year] = dateStr.split("/");
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
 
-    jobs.forEach((j) => {
-      const day = j.startTime.slice(0, 10); // "YYYY-MM-DD"
+  const usageData = useMemo(() => {
+    const bucket: Record<string, { date: string; compressions: number; bytesProcessed: number }> = {};
+
+    jobs.forEach(j => {
+      const day = j.startTime.slice(0,10);
       if (!bucket[day]) {
-        bucket[day] = { date: day, compressions: 0, dataProcessed: 0 };
+        bucket[day] = { date: day, compressions: 0, bytesProcessed: 0 };
       }
       bucket[day].compressions++;
-      bucket[day].dataProcessed += j.originalSize;
+      // ⬇️ cast to number here!
+      bucket[day].bytesProcessed += Number(j.originalSize);
     });
 
     return Object.values(bucket)
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .map((p) => ({
-        date:           p.date,
-        compressions:   p.compressions,
-        dataProcessed:  Math.round(p.dataProcessed / (1024 * 1024)), // to MB
+      .sort((a,b) => a.date.localeCompare(b.date))
+      .map(d => ({
+        date: parseToISO(d.date),
+        compressions:  d.compressions,
+        // Convert bytes → MB so your chart works in reasonable units
+        dataProcessed: +(d.bytesProcessed / (1024*1024)).toFixed(1),
       }));
   }, [jobs]);
 
   // 3) Derive compressionTypeData from jobs
+  function categorizeMime(mime: string | undefined): string {
+    if (!mime) return "Unknown";
+    if (mime.startsWith("image/"))       return "Photo";
+    if (mime.startsWith("video/"))       return "Video";
+    if (
+      mime === "application/pdf" ||
+      mime.startsWith("application/msword") ||
+      mime.startsWith(
+        "application/vnd.openxmlformats-officedocument"
+      )
+    ) return "Document";
+    if (mime.startsWith("text/"))         return "Text";
+    if (mime.startsWith("audio/"))        return "Audio";
+    return "Other";
+  }
+  
   const compressionTypeData: TypePoint[] = useMemo(() => {
     const counts: Record<string, number> = {};
+
     jobs.forEach((j) => {
-      counts[j.type] = (counts[j.type] || 0) + 1;
+      // grab the first input file's mimeType
+      const mime = j.inputFiles[0]?.mimeType;
+      const category = categorizeMime(mime);
+
+      counts[category] = (counts[category] || 0) + 1;
     });
-    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+
+    return Object.entries(counts).map(([name, value]) => ({
+      name,
+      value,
+      color: FILE_TYPE_COLORS[name] || "#D1D5DB", // Fallback gray if unknown
+    }));
   }, [jobs]);
 
   if (loading) {
     return <div className="p-8 text-white">Loading your dashboard…</div>;
   }
 
+  console.log('jobs', jobs);
+  console.log('usageData', usageData);
+  console.log('compressionTypeData', compressionTypeData);
+
   return (
     <div className="min-h-screen bg-slate-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-        {/* StatsCards can still take jobs if you want them */}
         <StatsCards jobs={jobs} usageData={usageData} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

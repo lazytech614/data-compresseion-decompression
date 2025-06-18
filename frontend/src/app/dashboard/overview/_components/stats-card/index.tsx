@@ -26,7 +26,7 @@ const StatsCards = ({ jobs }: any) => {
     },
     {
       title: 'Avg Compression',
-      value: `${avgCompressionRatio.toFixed(1)}%`,
+      value: `${(avgCompressionRatio * 100).toFixed(1)}%`,
       icon: TrendingUp,
     },
     {
