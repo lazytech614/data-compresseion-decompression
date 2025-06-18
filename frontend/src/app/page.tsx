@@ -1,26 +1,22 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { 
-  useState, 
-  useEffect, 
-  FormEvent 
-} from 'react';
-import { useRouter } from 'next/navigation';
+  Download, 
+  FileText, 
+  Settings, 
+  Upload, 
+  Zap 
+} from "lucide-react";
 
-import FileUploader from '../components/global/file-uploader';
-import AlgorithmSelector from '../components/global/algorithm-selector';
+import AlgorithmSelector from "@/components/global/algorithm-selector";
+import FileUploader from "@/components/global/file-uploader";
+import { ALGORITHMS } from "@/constants/algorithms";
 import { 
   postCompression, 
-  postDecompression, 
-  fetchAlgorithms 
+  postDecompression,  
 } from '../../utils/api';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
 
 interface ApiResult {
   fileName: string;
@@ -36,39 +32,18 @@ interface ApiResult {
   mode?: 'compress' | 'decompress';
 }
 
-export default function Home() {
+export default function CompressionPortal() {
+  const router = useRouter();
+
   const [file, setFile] = useState<File | null>(null);
-  const [algorithms, setAlgorithms] = useState<{ id: string; desc: string }[]>([]);
-  const [selectedAlgo, setSelectedAlgo] = useState<string>('');
+  const [algorithms, setAlgorithms] = useState(ALGORITHMS);
+  const [selectedAlgo, setSelectedAlgo] = useState<string>('huffman');
   const [mode, setMode] = useState<'compress' | 'decompress'>('compress');
   const [loading, setLoading] = useState(false);
   const [savedResults, setSavedResults] = useState<ApiResult[]>([]);
   const [selectedMetadataFile, setSelectedMetadataFile] = useState<string>('');
-  const router = useRouter();
 
-  useEffect(() => {
-    fetchAlgorithms()
-      .then((resp) => {
-        setAlgorithms(resp.data);
-        if (resp.data.length > 0) {
-          setSelectedAlgo(resp.data[0].id);
-        }
-      })
-      .catch(console.error);
-  }, []);
-
-  useEffect(() => {
-    const stored = localStorage.getItem('compressionResults');
-    if (stored) {
-      const parsed: ApiResult[] = JSON.parse(stored);
-      setSavedResults(parsed);
-      if (parsed.length > 0) {
-        setSelectedMetadataFile(parsed[0].fileName);
-      }
-    }
-  }, [mode]);
-
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file || !selectedAlgo) {
       return alert('Choose a file and algorithm.');
@@ -107,82 +82,158 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center bg-[var(--bg-dark)] text-[var(--text-light)] px-4">
-      {/* <ThemeToggle /> */}
-      <h1 className="text-3xl font-semibold mb-6 text-[#F8F6FF]">Data Compression & Decompression Portal</h1>
-      <form onSubmit={handleSubmit} className="w-full max-w-md bg-[var(--card-dark)] text-[var(--text-light)] p-6 rounded-lg shadow">
-        <div className="mb-4">
-          <label className="inline-flex items-center">
-            <input
-              type="radio"
-              name="mode"
-              value="compress"
-              checked={mode === 'compress'}
-              onChange={() => setMode('compress')}
-              className="form-radio"
-            />
-            <span className="ml-2">Compress</span>
-          </label>
-          <label className="inline-flex items-center ml-6">
-            <input
-              type="radio"
-              name="mode"
-              value="decompress"
-              checked={mode === 'decompress'}
-              onChange={() => setMode('decompress')}
-              className="form-radio"
-            />
-            <span className="ml-2">Decompress</span>
-          </label>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-bold text-white mb-4">
+            Data Compression & Decompression Portal
+          </h2>
+          <p className="text-xl text-slate-400 max-w-2xl mx-auto">
+            Compress and decompress files using various algorithms with real-time visualization and performance metrics.
+          </p>
         </div>
 
-        <FileUploader onFileSelect={(f: any) => setFile(f)} />
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-slate-700 p-8 shadow-2xl">
+          <div className="space-y-8">
 
-        {algorithms.length > 0 && (
-          <AlgorithmSelector
-            algorithms={algorithms}
-            selected={selectedAlgo}
-            onChange={setSelectedAlgo}
-          />
-        )}
-
-        {mode === 'decompress' && savedResults.length > 0 && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-[var(--text-light)] mb-1">
-              Select Metadata File:
-            </label>
-            <Select
-              value={selectedMetadataFile}
-              onValueChange={(e) => setSelectedMetadataFile(e)}
-            >
-              <SelectTrigger className="w-full px-2 py-1">
-                <SelectValue placeholder="Select a file" />
-              </SelectTrigger>
-              <SelectContent>
-                {savedResults
-                .filter((r) => r.mode === 'compress' && r.metadata)
-                .map((r) => (
-                  <SelectItem key={r.fileName} value={r.fileName}>
-                    {r.fileName}
-                  </SelectItem>
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-4">
+                Operation Mode
+              </label>
+              <div className="flex flex-col sm:flex-row gap-y-4 space-x-4">
+                {(['compress', 'decompress'] as const).map((modeOption) => (
+                  <label
+                    key={modeOption}
+                    className={`w-full flex items-center space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 flex-1 ${
+                      mode === modeOption
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : 'border-slate-600 bg-slate-800/30 hover:border-slate-500'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="mode"
+                      value={modeOption}
+                      checked={mode === modeOption}
+                      onChange={() => setMode(modeOption)}
+                      className="sr-only"
+                    />
+                    <div className={`p-2 rounded-lg ${
+                      mode === modeOption ? 'bg-blue-500/20' : 'bg-slate-700'
+                    }`}>
+                      {modeOption === 'compress' ? (
+                        <Download className={`w-5 h-5 ${
+                          mode === modeOption ? 'text-blue-400' : 'text-slate-400'
+                        }`} />
+                      ) : (
+                        <Upload className={`w-5 h-5 ${
+                          mode === modeOption ? 'text-blue-400' : 'text-slate-400'
+                        }`} />
+                      )}
+                    </div>
+                    <div>
+                      <span className={`font-medium capitalize ${
+                        mode === modeOption ? 'text-blue-300' : 'text-slate-300'
+                      }`}>
+                        {modeOption}
+                      </span>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {modeOption === 'compress' ? 'Reduce file size' : 'Restore original file'}
+                      </p>
+                    </div>
+                  </label>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+              </div>
+            </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white py-2 rounded  transition"
-        >
-          {loading
-            ? 'Processing...'
-            : mode === 'compress'
-            ? 'Compress File'
-            : 'Decompress File'}
-        </button>
-      </form>
+            <FileUploader onFileSelect={setFile} file={file} />
+
+            <AlgorithmSelector
+              algorithms={algorithms}
+              selected={selectedAlgo}
+              onChange={setSelectedAlgo}
+            />
+
+            {mode === 'decompress' && savedResults.length > 0 && (
+              <div>
+                <label className="block text-sm font-semibold text-slate-300 mb-3">
+                  Select Metadata File
+                </label>
+                <select
+                  value={selectedMetadataFile}
+                  onChange={(e) => setSelectedMetadataFile(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-slate-300 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                >
+                  <option value="">Select a file</option>
+                  {savedResults
+                    .filter((r) => r.mode === 'compress' && r.metadata)
+                    .map((r) => (
+                      <option key={r.fileName} value={r.fileName}>
+                        {r.fileName}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            )}
+
+            <button
+              onClick={handleSubmit}
+              type="submit"
+              disabled={loading || !file || !selectedAlgo}
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-slate-600 disabled:to-slate-700 text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed flex items-center justify-center space-x-2 text-lg"
+            >
+              {loading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <span>Processing...</span>
+                </>
+              ) : (
+                <>
+                  {mode === 'compress' ? (
+                    <Download className="w-5 h-5" />
+                  ) : (
+                    <Upload className="w-5 h-5" />
+                  )}
+                  <span>
+                    {mode === 'compress' ? 'Compress File' : 'Decompress File'}
+                  </span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            {
+              icon: <Zap className="w-8 h-8 text-blue-400" />,
+              title: "Lightning Fast",
+              description: "Optimized algorithms for maximum performance"
+            },
+            {
+              icon: <FileText className="w-8 h-8 text-green-400" />,
+              title: "Multiple Formats",
+              description: "Support for all major file formats"
+            },
+            {
+              icon: <Settings className="w-8 h-8 text-purple-400" />,
+              title: "Advanced Options",
+              description: "Fine-tune compression parameters"
+            }
+          ].map((feature, index) => (
+            <div key={index} className="bg-slate-800/30 backdrop-blur-sm rounded-xl p-6 border border-slate-700 hover:border-slate-600 transition-colors">
+              <div className="flex items-center space-x-4 mb-3">
+                <div className="p-2 bg-slate-700/50 rounded-lg">
+                  {feature.icon}
+                </div>
+                <h3 className="text-lg font-semibold text-white">{feature.title}</h3>
+              </div>
+              <p className="text-slate-400">{feature.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
