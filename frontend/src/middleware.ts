@@ -2,7 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
 const isProtectedRoutes = createRouteMatcher([
-  "/dashboard(.*)"
+  "/dashboard(.*)", "/api/compression-jobs(.*)",
 ])
 export default clerkMiddleware(async (auth, req) => {
   if(isProtectedRoutes(req)) {
