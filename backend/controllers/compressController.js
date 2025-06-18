@@ -1,6 +1,7 @@
 import fs from "fs";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
+import dotenv from "dotenv";
 
 import { compress as huffmanCompress } from "../algorithms/huffman.js";
 import { compress as rleCompress } from "../algorithms/rle.js";
@@ -11,12 +12,14 @@ import { calculateStats } from "../utils/statsCalculator.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+dotenv.config();
+
 export default async function handleCompression(req, res) {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded." });
     }
-    const algorithm = req.body.algorithm; // e.g., "huffman", "rle", "lz77"
+    const algorithm = req.body.algorithm;
     const inputPath = req.file.path;
     const inputBuffer = fs.readFileSync(inputPath);
     const originalSize = inputBuffer.length;
@@ -61,14 +64,77 @@ export default async function handleCompression(req, res) {
     // Clean up original upload
     fs.unlinkSync(inputPath);
 
-    return res.json({
+    const response = {
       fileName: compressedFilename,
       compressedBase64,
-      stats,
-      metadata: result.metadata, // so client could request decompression if needed
-    });
+      stats: {
+        originalSize,
+        newSize: compressedSize,
+        compressionRatio: stats.compressionRatio,
+        timeMs: timeTakenMs,
+      },
+      metadata: result.metadata,
+      algorithm,
+      success: true,
+    };
+
+    try {
+      const dbResponse = await fetch(
+        `${process.env.FRONTEND_URL}/api/compression-jobs`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            // Add authentication headers if needed
+          },
+          body: JSON.stringify({
+            type: "compress",
+            algorithm,
+            fileName: compressedFilename,
+            originalSize,
+            compressedSize,
+            compressionRatio: stats.compressionRatio,
+            duration: timeTakenMs,
+            compressedBase64,
+            metadata: result.metadata,
+            status: "COMPLETED",
+          }),
+        }
+      );
+
+      if (!dbResponse.ok) {
+        console.warn(
+          "Failed to save job to database:",
+          await dbResponse.text()
+        );
+      }
+    } catch (dbError) {
+      console.warn("Database save error:", dbError);
+      // Don't fail the compression if database save fails
+    }
+
+    return res.json(response);
   } catch (err) {
-    console.error(err);
+    console.error("Compression error:", err);
+    try {
+      await fetch(`${process.env.FRONTEND_URL}/api/compression-jobs`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "compress",
+          algorithm: req.body.algorithm,
+          fileName: req.file?.originalname || "unknown",
+          originalSize: req.file?.size || 0,
+          status: "FAILED",
+          errorMessage: err.message,
+        }),
+      });
+    } catch (dbError) {
+      console.warn("Failed to save error to database:", dbError);
+    }
+
     return res.status(500).json({ error: "Server error during compression." });
   }
 }
