@@ -29,7 +29,12 @@ const GlobalHeader = () => {
 
             <nav className="absolute left-1/2 -translate-x-1/2 hidden md:flex space-x-8">
               {NAV_LINKS.map((link) => {
-                const isActive = pathname === link.href;
+                let isActive;
+                if (link.href === '/') {
+                  isActive = pathname === '/';
+                } else {
+                  isActive = pathname.startsWith(link.href);
+                }
                 return (
                   <Link
                     href={link.href}
