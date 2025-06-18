@@ -3,6 +3,22 @@
 import { client } from "@/lib/prisma";
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { startOfToday } from 'date-fns';
+
+const incrementUserCountInSystemStats = async () => {
+  const today = startOfToday();
+
+  await client.systemStats.upsert({
+    where: { date: today },
+    update: {
+      totalUsers: { increment: 1 }
+    },
+    create: {
+      date: today,
+      totalUsers: 1
+    }
+  });
+};
 
 export const onAuthenticateUser = async () => {
     try{
@@ -69,6 +85,7 @@ export const onAuthenticateUser = async () => {
 
         if(newUser) {
             console.log("🟢User created", newUser);
+            await incrementUserCountInSystemStats();
             return { status: 201, message: "User created", data: newUser }
         }
 

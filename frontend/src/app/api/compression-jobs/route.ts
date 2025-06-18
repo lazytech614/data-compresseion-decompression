@@ -1,6 +1,114 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { client } from '@/lib/prisma'; 
 import { currentUser } from '@clerk/nextjs/server'; 
+import { startOfToday } from 'date-fns';
+
+async function updateGlobalStats({
+  bytesProcessed,
+  compressionRatio,
+  storageUsed,
+}: {
+  bytesProcessed: number;
+  compressionRatio: number;
+  storageUsed?: number;
+}) {
+  const today = startOfToday();
+
+  // Recalculate avgCompressionRatio as running average
+  const existing = await client.systemStats.findUnique({ where: { date: today } });
+  let newAvgRatio = compressionRatio;
+  if (existing && existing.totalCompressions > 0) {
+    newAvgRatio =
+      ((existing.avgCompressionRatio * existing.totalCompressions) + compressionRatio) /
+      (existing.totalCompressions + 1);
+  }
+
+  await client.systemStats.upsert({
+    where: { date: today },
+    update: {
+      totalCompressions: { increment: 1 },
+      totalDataProcessed: { increment: BigInt(bytesProcessed) },
+      totalStorageUsed: storageUsed ? { increment: BigInt(storageUsed) } : undefined,
+      avgCompressionRatio: newAvgRatio,
+    },
+    create: {
+      date: today,
+      totalUsers: 0,
+      totalCompressions: 1,
+      totalDataProcessed: BigInt(bytesProcessed),
+      totalStorageUsed: BigInt(storageUsed || 0),
+      avgCompressionRatio: compressionRatio,
+      // category fields will be updated by updateCategoryStats
+    },
+  });
+}
+
+async function updateCategoryStats({
+  category,
+  ratio,
+  duration,
+}: {
+  category: string;
+  ratio: number;
+  duration: number;
+}) {
+  const today = startOfToday();
+  const field = (x: string) => x.toLowerCase().replace(/[^a-z]/g, '');
+
+  const countField = `${field(category)}Count` as keyof typeof client.systemStats;
+  const ratioField = `${field(category)}AvgRatio` as keyof typeof client.systemStats;
+  const durField = `${field(category)}AvgDuration` as keyof typeof client.systemStats;
+
+  const existing = await client.systemStats.findUnique({ where: { date: today } });
+  if (!existing) {
+    // If stats row didn’t exist, create with just this category
+    return client.systemStats.create({
+      data: {
+        date: today,
+        totalUsers: 0,
+        totalCompressions: 0,
+        totalDataProcessed: BigInt(0),
+        totalStorageUsed: BigInt(0),
+        avgCompressionRatio: 0,
+        [countField]: 1,
+        [ratioField]: ratio,
+        [durField]: duration,
+      } as any,
+    });
+  }
+
+  const prevCount = (existing as any)[countField] || 0;
+  const prevAvgRatio = (existing as any)[ratioField] || 0;
+  const prevAvgDur = (existing as any)[durField] || 0;
+
+  const newAvgRatio = ((prevAvgRatio * prevCount) + ratio) / (prevCount + 1);
+  const newAvgDuration = ((prevAvgDur * prevCount) + duration) / (prevCount + 1);
+
+  return client.systemStats.update({
+    where: { date: today },
+    data: {
+      [countField]: { increment: 1 },
+      [ratioField]: newAvgRatio,
+      [durField]: newAvgDuration,
+    } as any,
+  });
+}
+
+function categorizeMime(mime?: string): string {
+  if (!mime) return 'Unknown';
+  if (mime.startsWith('image/')) return 'Photo';
+  if (mime.startsWith('video/')) return 'Video';
+  if (
+    mime === 'application/pdf' ||
+    mime.startsWith('application/msword') ||
+    mime.startsWith(
+      'application/vnd.openxmlformats-officedocument'
+    )
+  ) return 'Document';
+  if (mime.startsWith('text/')) return 'Text';
+  if (mime.startsWith('audio/')) return 'Audio';
+  return 'Other';
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -120,6 +228,22 @@ export async function POST(request: NextRequest) {
         },
       });
     }
+
+    // a) global stats
+    await updateGlobalStats({
+      bytesProcessed: originalSize,
+      compressionRatio,
+      storageUsed: compressedSize,
+    });
+
+    // b) category‐wise (assume first input file’s mimeType)
+    const mime = inputFiles[0]?.mimeType;
+    const category = categorizeMime(mime);
+    await updateCategoryStats({
+      category,
+      ratio: compressionRatio,
+      duration,
+    });
 
     return NextResponse.json({
       success: true,
