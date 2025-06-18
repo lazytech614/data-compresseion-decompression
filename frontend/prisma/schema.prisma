@@ -1,0 +1,177 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clerkId   String?  @unique
+  email     String   @unique
+  username  String?  @unique
+  firstName String?
+  lastName  String?
+  avatar    String?
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lastLogin DateTime?
+  
+  // Relations
+  compressionJobs CompressionJob[]
+  files          File[]
+  
+  @@map("users")
+}
+
+model CompressionJob {
+  id          String @id @default(cuid())
+  userId      String
+  
+  // Job details
+  status      JobStatus @default(PENDING)
+  type        CompressionType
+  quality     Int? // For lossy compression
+  
+  // File information
+  originalSize    BigInt
+  compressedSize  BigInt?
+  compressionRatio Float?
+  
+  // Processing details
+  startTime   DateTime @default(now())
+  endTime     DateTime?
+  duration    Int? // in milliseconds
+  errorMessage String?
+  
+  // Metadata
+  batchId     String? // For batch operations
+  priority    Priority @default(NORMAL)
+  
+  // Relations
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inputFiles  File[] @relation("InputFiles")
+  outputFiles File[] @relation("OutputFiles")
+  
+  @@map("compression_jobs")
+}
+
+model File {
+  id          String @id @default(cuid())
+  userId      String
+  
+  // File details
+  filename    String
+  originalName String
+  mimeType    String
+  size        BigInt
+  path        String // Storage path
+  url         String? // Public URL if applicable
+  
+  // File metadata
+  checksum    String // For integrity verification
+  isTemporary Boolean @default(true)
+  isPublic    Boolean @default(false)
+  
+  // Expiration
+  expiresAt   DateTime?
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastAccessed DateTime @default(now())
+  
+  // Relations
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inputForJobs    CompressionJob[] @relation("InputFiles")
+  outputForJobs   CompressionJob[] @relation("OutputFiles")
+  
+  @@map("files")
+}
+
+model SystemStats {
+  id              String @id @default(cuid())
+  date            DateTime @unique @default(now())
+  
+  // Daily stats
+  totalUsers      Int @default(0)
+  activeUsers     Int @default(0)
+  newUsers        Int @default(0)
+  
+  // Compression stats
+  totalCompressions Int @default(0)
+  totalDataProcessed BigInt @default(0) // in bytes
+  avgCompressionRatio Float @default(0)
+  
+  // Storage stats
+  totalStorageUsed BigInt @default(0)
+  
+  @@map("system_stats")
+}
+
+model UsageLog {
+  id        String @id @default(cuid())
+  userId    String?
+  
+  // Action details
+  action    String // "compress", "decompress", "download", etc.
+  endpoint  String?
+  method    String?
+  
+  // Request details
+  ipAddress String?
+  userAgent String?
+  
+  // Response details
+  statusCode Int?
+  responseTime Int? // in milliseconds
+  dataSize  BigInt? // bytes processed
+  
+  // Timestamps
+  timestamp DateTime @default(now())
+  
+  @@index([userId])
+  @@index([timestamp])
+  @@map("usage_logs")
+}
+
+// Enums
+enum Plan {
+  FREE
+  BASIC
+  PRO
+  ENTERPRISE
+}
+
+enum CompressionType {
+  ZIP
+  RAR
+  GZIP
+  BZIP2
+  XZ
+  SEVENZ
+  TAR
+  JPEG
+  PNG
+  WEBP
+  PDF
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}

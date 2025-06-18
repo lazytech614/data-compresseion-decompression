@@ -9,6 +9,7 @@ import {
   UserButton,
 } from '@clerk/nextjs'
 import { Zap } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 const GlobalHeader = () => {
   return (
@@ -34,13 +35,23 @@ const GlobalHeader = () => {
               ))}
             </nav>
             <div className="flex items-center space-x-4">
-              <SignedOut>
+              {/* <SignedOut>
                 <button className="text-slate-300 hover:text-white transition-colors">
                   <SignInButton />
                 </button>
                 <button className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all">
                   <SignUpButton />
                 </button>
+              </SignedOut>
+              <SignedIn>
+                <UserButton />
+              </SignedIn> */}
+              <SignedOut>
+                <Link href={'/auth/sign-in'}>
+                  <Button className='bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all'>
+                    Get started
+                  </Button>
+                </Link>
               </SignedOut>
               <SignedIn>
                 <UserButton />
@@ -52,18 +63,5 @@ const GlobalHeader = () => {
       </header>
   )
 }
-
-{/* <div>
-    //     <SignedOut>
-    //       <div className='flex gap-x-2'>
-    //         <SignInButton />
-    //         <SignUpButton />
-    //       </div>
-    //     </SignedOut>
-    //     <SignedIn>
-    //       <UserButton />
-    //     </SignedIn>
-    //   </div>
-    // </div> */}
 
 export default GlobalHeader
