@@ -45,6 +45,7 @@ interface CompressionJob {
   startTime: string;
   endTime?: string;
   inputFiles: any[];
+  mimeType: string;
   outputFiles: any[];
 }
 
@@ -114,6 +115,21 @@ export default function CompressionPortal() {
         compressedBase64: data.compressedBase64,
         decompressedBase64: data.decompressedBase64,
         metadata: data.metadata,
+        mimeType: file.type,
+        inputFiles: [{
+          filename: file.name,
+          originalName: file.name,
+          mimeType: file.type,
+          size: file.size,
+          path: "", // depends on your storage
+        }],
+        outputFiles: data.compressedBase64 ? [{
+          filename: data.fileName,
+          originalName: file.name,
+          mimeType: "application/octet-stream",
+          size: data.stats.newSize,
+          path: "",
+        }] : [],
         status: 'COMPLETED'
       });
 
@@ -133,7 +149,16 @@ export default function CompressionPortal() {
           fileName: file.name,
           originalSize: file.size,
           status: 'FAILED',
-          errorMessage: err instanceof Error ? err.message : 'Unknown error'
+          mimeType: file.type,
+          errorMessage: (err as Error).message,
+          inputFiles: [{
+            filename: file.name,
+            originalName: file.name,
+            mimeType: file.type,
+            size: file.size,
+            path: "", // depends on your storage
+          }],
+          outputFiles: [],
         });
         await loadCompressionJobs();
       } catch (saveError) {

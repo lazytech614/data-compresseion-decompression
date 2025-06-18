@@ -6,19 +6,17 @@ export async function POST(request: NextRequest) {
   try {
     const user = await currentUser();
 
-    const userId = await client.user.findUnique({
+    const userRecord = await client.user.findUnique({
       where: { clerkId: user?.id },
-      select: { id: true }
-    })
+      select: { id: true },
+    });
 
-    if (!userId) {
-      console.log("🔴No user found in the onAuthenticateUser server action");
+    if (!userRecord) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
     const {
-      type, // 'compress' or 'decompress'
+      type,
       algorithm,
       originalSize,
       compressedSize,
@@ -28,50 +26,98 @@ export async function POST(request: NextRequest) {
       compressedBase64,
       decompressedBase64,
       metadata,
-      status = 'COMPLETED'
-    } = body;
+      mimeType,
+      status = 'COMPLETED',
+      inputFiles = [],
+      outputFiles = [],
+    } = await request.json();
 
-    // Create compression job record
+    // 1. Create Job
     const job = await client.compressionJob.create({
       data: {
-        userId: userId.id,
-        type: type.toUpperCase() as any, // Ensure it matches your enum
-        status: status as any,
+        userId: userRecord.id,
+        type: type.toUpperCase(),
+        status,
         originalSize: BigInt(originalSize),
         compressedSize: compressedSize ? BigInt(compressedSize) : null,
         compressionRatio,
         duration,
         endTime: new Date(),
-        // Add other fields as needed
-      }
+        // Optionally save algorithm, metadata
+        // algorithm,
+        // metadata
+      },
     });
 
-    // Create file records if needed
-    if (fileName && (compressedBase64 || decompressedBase64)) {
-      const fileData = {
-        userId: userId.id,
-        filename: fileName,
-        originalName: fileName,
-        mimeType: 'application/octet-stream', // Adjust as needed
-        size: BigInt(compressedSize || originalSize),
-        path: `/uploads/${fileName}`, // Adjust path as needed
-        checksum: '', // You might want to calculate this
-        isTemporary: true,
-        // Store the base64 data or file path
-      };
+    // 2. Create Input Files
+    const inputFileCreates = inputFiles.map((f: any) =>
+      client.file.create({
+        data: {
+          userId: userRecord.id,
+          filename: f.filename,
+          originalName: f.originalName,
+          mimeType: f.mimeType,
+          size: BigInt(f.size),
+          path: f.path || '',
+          checksum: '',
+          isTemporary: true,
+        },
+      })
+    );
+    const createdInputFiles = await Promise.all(inputFileCreates);
 
-      const file = await client.file.create({
-        data: fileData
+    // 3. Create Output Files
+    const outputFileCreates = outputFiles.map((f: any) =>
+      client.file.create({
+        data: {
+          userId: userRecord.id,
+          filename: f.filename,
+          originalName: f.originalName,
+          mimeType: f.mimeType,
+          size: BigInt(f.size),
+          path: f.path || '',
+          checksum: '',
+          isTemporary: true,
+        },
+      })
+    );
+    const createdOutputFiles = await Promise.all(outputFileCreates);
+
+    // 4. Link Input/Output Files
+    await client.compressionJob.update({
+      where: { id: job.id },
+      data: {
+        inputFiles: {
+          connect: createdInputFiles.map(f => ({ id: f.id })),
+        },
+        outputFiles: {
+          connect: createdOutputFiles.map(f => ({ id: f.id })),
+        },
+      },
+    });
+
+    // 5. Optional: handle compressedBase64 / decompressedBase64 as virtual file
+    if (fileName && (compressedBase64 || decompressedBase64)) {
+      const virtualFile = await client.file.create({
+        data: {
+          userId: userRecord.id,
+          filename: fileName,
+          originalName: fileName,
+          mimeType: mimeType || 'application/octet-stream',
+          size: BigInt(compressedSize || originalSize),
+          path: `/uploads/${fileName}`,
+          checksum: '',
+          isTemporary: true,
+        },
       });
 
-      // Link file to job
       await client.compressionJob.update({
         where: { id: job.id },
         data: {
           [type === 'compress' ? 'outputFiles' : 'inputFiles']: {
-            connect: { id: file.id }
-          }
-        }
+            connect: { id: virtualFile.id },
+          },
+        },
       });
     }
 
@@ -82,9 +128,8 @@ export async function POST(request: NextRequest) {
         ...job,
         originalSize: job.originalSize.toString(),
         compressedSize: job.compressedSize?.toString(),
-      }
+      },
     });
-
   } catch (error) {
     console.error('Error saving compression job:', error);
     return NextResponse.json(

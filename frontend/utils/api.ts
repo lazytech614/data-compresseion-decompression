@@ -26,6 +26,14 @@ export async function fetchAlgorithms() {
   return res.json();
 }
 
+export interface FilePayload {
+  filename:     string;
+  originalName: string;
+  mimeType:     string;
+  size:         number;
+  path?:        string;
+  url?:         string;
+}
 
 export async function saveCompressionJob(jobData: {
   type: string;
@@ -38,8 +46,11 @@ export async function saveCompressionJob(jobData: {
   compressedBase64?: string;
   decompressedBase64?: string;
   metadata?: any;
+  mimeType: string;
   status: string;
   errorMessage?: string;
+  inputFiles: FilePayload[];
+  outputFiles: FilePayload[];
 }) {
   const res = await fetch('/api/compression-jobs', {
     method: 'POST',
