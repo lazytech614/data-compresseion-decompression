@@ -25,3 +25,73 @@ export async function fetchAlgorithms() {
   if (!res.ok) throw new Error('Failed to load algorithms');
   return res.json();
 }
+
+
+export async function saveCompressionJob(jobData: {
+  type: string;
+  algorithm: string;
+  fileName: string;
+  originalSize: number;
+  compressedSize?: number;
+  compressionRatio?: number;
+  duration?: number;
+  compressedBase64?: string;
+  decompressedBase64?: string;
+  metadata?: any;
+  status: string;
+  errorMessage?: string;
+}) {
+  const res = await fetch('/api/compression-jobs', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(jobData)
+  });
+  
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Failed to save compression job');
+  }
+  
+  return res.json();
+}
+
+export async function getCompressionJobs() {
+  const res = await fetch('/api/compression-jobs', {
+    method: 'GET',
+  });
+  
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Failed to fetch compression jobs');
+  }
+  
+  return res.json();
+}
+
+export async function getCompressionJobById(jobId: string) {
+  const res = await fetch(`/api/compression-jobs/${jobId}`, {
+    method: 'GET',
+  });
+  
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Failed to fetch compression job');
+  }
+  
+  return res.json();
+}
+
+export async function deleteCompressionJob(jobId: string) {
+  const res = await fetch(`/api/compression-jobs/${jobId}`, {
+    method: 'DELETE',
+  });
+  
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Failed to delete compression job');
+  }
+  
+  return res.json();
+}

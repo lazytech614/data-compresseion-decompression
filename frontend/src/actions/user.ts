@@ -6,10 +6,11 @@ import { NextResponse } from "next/server";
 
 export const onAuthenticateUser = async () => {
     try{
+        console.log("I am here in the onAuthenticateUser server action");
         const user = await currentUser()
         if(!user) {
             console.log("🔴No user found in the onAuthenticateUser server action");
-            return NextResponse.json({ status: 401, message: "Unauthorized", data: null });
+            return { status: 401, message: "Unauthorized", data: null }
         }
 
         const userExists = await client.user.findUnique({
@@ -52,7 +53,7 @@ export const onAuthenticateUser = async () => {
 
         if(userExists) {
             console.log("🟢User exists", userExists);
-            return NextResponse.json({ status: 200, message: "User exists", data: userExists });
+            return { status: 200, message: "User exists", data: userExists }
         }
 
         const newUser = await client.user.create({
@@ -68,13 +69,13 @@ export const onAuthenticateUser = async () => {
 
         if(newUser) {
             console.log("🟢User created", newUser);
-            return NextResponse.json({ status: 201, message: "User created", data: newUser });
+            return { status: 201, message: "User created", data: newUser }
         }
 
         console.log("🔴Error in the onAuthenticateUser server action");
-        return NextResponse.json({ status: 400, message: "Error in the onAuthenticateUser server action", data: null });   
+        return { status: 400, message: "Error in the onAuthenticateUser server action", data: null }
     }catch(err) {
         console.log("🔴Error in the onAuthenticateUser server action", err);
-        return NextResponse.json({ status: 500, message: "Error in the onAuthenticateUser server action", data: null });
+        return { status: 500, message: "Error in the onAuthenticateUser server action", data: null }
     }
 }

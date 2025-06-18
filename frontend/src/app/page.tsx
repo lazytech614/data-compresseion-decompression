@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
   Download, 
@@ -15,7 +15,9 @@ import FileUploader from "@/components/global/file-uploader";
 import { ALGORITHMS } from "@/constants/algorithms";
 import { 
   postCompression, 
-  postDecompression,  
+  postDecompression,
+  saveCompressionJob,
+  getCompressionJobs
 } from '../../utils/api';
 
 interface ApiResult {
@@ -32,6 +34,20 @@ interface ApiResult {
   mode?: 'compress' | 'decompress';
 }
 
+interface CompressionJob {
+  id: string;
+  type: string;
+  status: string;
+  originalSize: string;
+  compressedSize?: string;
+  compressionRatio?: number;
+  duration?: number;
+  startTime: string;
+  endTime?: string;
+  inputFiles: any[];
+  outputFiles: any[];
+}
+
 export default function CompressionPortal() {
   const router = useRouter();
 
@@ -40,8 +56,22 @@ export default function CompressionPortal() {
   const [selectedAlgo, setSelectedAlgo] = useState<string>('huffman');
   const [mode, setMode] = useState<'compress' | 'decompress'>('compress');
   const [loading, setLoading] = useState(false);
-  const [savedResults, setSavedResults] = useState<ApiResult[]>([]);
+  const [savedResults, setSavedResults] = useState<CompressionJob[]>([]);
   const [selectedMetadataFile, setSelectedMetadataFile] = useState<string>('');
+
+  // Load compression jobs from database on component mount
+  useEffect(() => {
+    loadCompressionJobs();
+  }, []);
+
+  const loadCompressionJobs = async () => {
+    try {
+      const response = await getCompressionJobs();
+      setSavedResults(response.jobs || []);
+    } catch (error) {
+      console.error('Failed to load compression jobs:', error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,11 +84,15 @@ export default function CompressionPortal() {
     formData.append('algorithm', selectedAlgo);
 
     if (mode === 'decompress') {
-      const selected = savedResults.find((r) => r.fileName === selectedMetadataFile);
-      if (!selected || !selected.metadata) {
+      const selected = savedResults.find((r) => 
+        r.outputFiles.some(f => f.filename === selectedMetadataFile)
+      );
+      if (!selected) {
         return alert('No metadata found for selected file.');
       }
-      formData.append('metadata', JSON.stringify(selected.metadata));
+      // You might need to store metadata differently in your database
+      // For now, we'll pass the job ID
+      formData.append('jobId', selected.id);
     }
 
     setLoading(true);
@@ -68,14 +102,43 @@ export default function CompressionPortal() {
           ? await postCompression(formData)
           : await postDecompression(formData);
 
-      const previousResults = JSON.parse(localStorage.getItem('compressionResults') || '[]');
-      previousResults.push({ mode, ...data });
-      localStorage.setItem('compressionResults', JSON.stringify(previousResults));
+      // Save to database instead of localStorage
+      await saveCompressionJob({
+        type: mode,
+        algorithm: selectedAlgo,
+        fileName: data.fileName,
+        originalSize: data.stats.originalSize,
+        compressedSize: data.stats.newSize,
+        compressionRatio: data.stats.compressionRatio,
+        duration: data.stats.timeMs,
+        compressedBase64: data.compressedBase64,
+        decompressedBase64: data.decompressedBase64,
+        metadata: data.metadata,
+        status: 'COMPLETED'
+      });
+
+      // Reload jobs to update the list
+      await loadCompressionJobs();
 
       router.push('/result');
     } catch (err) {
       console.error(err);
       alert('Error while processing. See console.');
+      
+      // Save failed job to database
+      try {
+        await saveCompressionJob({
+          type: mode,
+          algorithm: selectedAlgo,
+          fileName: file.name,
+          originalSize: file.size,
+          status: 'FAILED',
+          errorMessage: err instanceof Error ? err.message : 'Unknown error'
+        });
+        await loadCompressionJobs();
+      } catch (saveError) {
+        console.error('Failed to save error job:', saveError);
+      }
     } finally {
       setLoading(false);
     }
@@ -83,7 +146,6 @@ export default function CompressionPortal() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-white mb-4">
@@ -158,7 +220,7 @@ export default function CompressionPortal() {
             {mode === 'decompress' && savedResults.length > 0 && (
               <div>
                 <label className="block text-sm font-semibold text-slate-300 mb-3">
-                  Select Metadata File
+                  Select Previously Compressed File
                 </label>
                 <select
                   value={selectedMetadataFile}
@@ -167,10 +229,11 @@ export default function CompressionPortal() {
                 >
                   <option value="">Select a file</option>
                   {savedResults
-                    .filter((r) => r.mode === 'compress' && r.metadata)
+                    .filter((r) => r.type === 'COMPRESS' && r.status === 'COMPLETED')
                     .map((r) => (
-                      <option key={r.fileName} value={r.fileName}>
-                        {r.fileName}
+                      <option key={r.id} value={r.outputFiles[0]?.filename || r.id}>
+                        {r.outputFiles[0]?.originalName || `Job ${r.id.slice(0, 8)}`} 
+                        ({new Date(r.startTime).toLocaleDateString()})
                       </option>
                     ))}
                 </select>
@@ -203,6 +266,42 @@ export default function CompressionPortal() {
             </button>
           </div>
         </div>
+
+        {/* Display recent jobs */}
+        {savedResults.length > 0 && (
+          <div className="mt-12">
+            <h3 className="text-2xl font-bold text-white mb-6">Recent Jobs</h3>
+            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-slate-700 p-6">
+              <div className="space-y-4">
+                {savedResults.slice(0, 5).map((job) => (
+                  <div key={job.id} className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg">
+                    <div>
+                      <p className="text-white font-medium">
+                        {job.type} - {job.outputFiles[0]?.originalName || 'Unknown'}
+                      </p>
+                      <p className="text-slate-400 text-sm">
+                        {new Date(job.startTime).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-sm font-medium ${
+                        job.status === 'COMPLETED' ? 'text-green-400' : 
+                        job.status === 'FAILED' ? 'text-red-400' : 'text-yellow-400'
+                      }`}>
+                        {job.status}
+                      </p>
+                      {job.compressionRatio && (
+                        <p className="text-slate-400 text-sm">
+                          {(job.compressionRatio * 100).toFixed(1)}% ratio
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
           {[

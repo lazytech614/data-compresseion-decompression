@@ -29,8 +29,8 @@ model User {
 }
 
 model CompressionJob {
-  id          String @id @default(cuid())
-  userId      String
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String  @db.Uuid
   
   // Job details
   status      JobStatus @default(PENDING)
@@ -61,8 +61,8 @@ model CompressionJob {
 }
 
 model File {
-  id          String @id @default(cuid())
-  userId      String
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String  @db.Uuid
   
   // File details
   filename    String
@@ -94,7 +94,7 @@ model File {
 }
 
 model SystemStats {
-  id              String @id @default(cuid())
+  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   date            DateTime @unique @default(now())
   
   // Daily stats
@@ -114,8 +114,8 @@ model SystemStats {
 }
 
 model UsageLog {
-  id        String @id @default(cuid())
-  userId    String?
+  id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String?  @db.Uuid
   
   // Action details
   action    String // "compress", "decompress", "download", etc.
@@ -148,17 +148,8 @@ enum Plan {
 }
 
 enum CompressionType {
-  ZIP
-  RAR
-  GZIP
-  BZIP2
-  XZ
-  SEVENZ
-  TAR
-  JPEG
-  PNG
-  WEBP
-  PDF
+  COMPRESS
+  DECOMPRESS
 }
 
 enum JobStatus {
