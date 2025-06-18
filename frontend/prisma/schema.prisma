@@ -94,24 +94,44 @@ model File {
 }
 
 model SystemStats {
-  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  date            DateTime @unique @default(now())
-  
-  // Daily stats
-  totalUsers      Int @default(0)
-  activeUsers     Int @default(0)
-  newUsers        Int @default(0)
-  
-  // Compression stats
-  totalCompressions Int @default(0)
-  totalDataProcessed BigInt @default(0) // in bytes
-  avgCompressionRatio Float @default(0)
-  
-  // Storage stats
-  totalStorageUsed BigInt @default(0)
-  
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  date                 DateTime @unique @default(now())
+
+  // Daily metrics
+  totalUsers           Int      @default(0)
+  totalCompressions    Int      @default(0)
+  totalDataProcessed   BigInt   @default(0)
+  avgCompressionRatio  Float    @default(0)
+  totalStorageUsed     BigInt   @default(0)
+
+  // Category-wise stats
+  photoCount           Int      @default(0)
+  photoAvgRatio        Float    @default(0)
+  photoAvgDuration     Float    @default(0)
+
+  videoCount           Int      @default(0)
+  videoAvgRatio        Float    @default(0)
+  videoAvgDuration     Float    @default(0)
+
+  documentCount        Int      @default(0)
+  documentAvgRatio     Float    @default(0)
+  documentAvgDuration  Float    @default(0)
+
+  audioCount           Int      @default(0)
+  audioAvgRatio        Float    @default(0)
+  audioAvgDuration     Float    @default(0)
+
+  textCount            Int      @default(0)
+  textAvgRatio         Float    @default(0)
+  textAvgDuration      Float    @default(0)
+
+  unknownCount         Int      @default(0)
+  unknownAvgRatio      Float    @default(0)
+  unknownAvgDuration   Float    @default(0)
+
   @@map("system_stats")
 }
+
 
 model UsageLog {
   id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid

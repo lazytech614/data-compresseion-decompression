@@ -13,7 +13,7 @@ const CompressionTypesChart = ({ data }: any) => {
               data={data}
               cx="50%"
               cy="50%"
-              innerRadius={60}
+              innerRadius={0}
               outerRadius={100}
               paddingAngle={0}
               dataKey="value"
@@ -50,7 +50,7 @@ const CompressionTypesChart = ({ data }: any) => {
           }));
 
           // Step 3: add back the difference to make total 100%
-          let remaining = 100 - rounded.reduce((sum: any, item: any) => sum + item.displayPercent, 0);
+          const remaining = 100 - rounded.reduce((sum: any, item: any) => sum + item.displayPercent, 0);
 
           const sorted = [...percentages]
             .map((p, i) => ({ i, frac: p.rawPercent % 1 }))
