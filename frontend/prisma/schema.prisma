@@ -36,6 +36,7 @@ model CompressionJob {
   status      JobStatus @default(PENDING)
   type        CompressionType
   quality     Int? // For lossy compression
+  algorithm   CompressionAlgorithm?
   
   // File information
   originalSize    BigInt
@@ -129,6 +130,23 @@ model SystemStats {
   unknownAvgRatio      Float    @default(0)
   unknownAvgDuration   Float    @default(0)
 
+  // Algorithm-wise stats
+  huffmanCount         Int      @default(0)
+  huffmanAvgRatio      Float    @default(0)
+  huffmanAvgDuration   Float    @default(0)
+
+  lz77Count            Int      @default(0)
+  lz77AvgRatio         Float    @default(0)
+  lz77AvgDuration      Float    @default(0)
+
+  lzwCount             Int      @default(0)
+  lzwAvgRatio          Float    @default(0)
+  lzwAvgDuration       Float    @default(0)
+
+  arithmeticCount      Int      @default(0)
+  arithmeticAvgRatio   Float    @default(0)
+  arithmeticAvgDuration Float   @default(0)
+
   @@map("system_stats")
 }
 
@@ -185,4 +203,22 @@ enum Priority {
   NORMAL
   HIGH
   URGENT
+}
+
+enum CompressionAlgorithm {
+  HUFFMAN
+  LZ77
+  RLE
+  LZW
+  LZ4
+  ZSTD
+  BZIP2
+  GZIP
+  DEFLATE
+  LZMA
+  LZMA2
+  XZ
+  LZ4HC
+  LZ4FAST
+  LZ4FASTHC
 }

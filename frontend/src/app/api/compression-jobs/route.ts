@@ -3,6 +3,8 @@ import { client } from '@/lib/prisma';
 import { currentUser } from '@clerk/nextjs/server'; 
 import { startOfToday } from 'date-fns';
 
+type AlgoKey = 'huffman' | 'lz77' | 'lzw' | 'arithmetic';
+
 async function updateGlobalStats({
   bytesProcessed,
   compressionRatio,
@@ -94,6 +96,54 @@ async function updateCategoryStats({
   });
 }
 
+async function updateAlgorithmStats({
+  algorithm,
+  ratio,
+  duration,
+}: {
+  algorithm: AlgoKey;
+  ratio: number;
+  duration: number;
+}) {
+  const today = startOfToday();
+  const countField = `${algorithm}Count` as keyof typeof client.systemStats;
+  const ratioField = `${algorithm}AvgRatio` as keyof typeof client.systemStats;
+  const durField = `${algorithm}AvgDuration` as keyof typeof client.systemStats;
+
+  const existing = await client.systemStats.findUnique({ where: { date: today } });
+  if (!existing) {
+    return client.systemStats.create({
+      data: {
+        date: today,
+        totalUsers: 0,
+        totalCompressions: 0,
+        totalDataProcessed: BigInt(0),
+        totalStorageUsed: BigInt(0),
+        avgCompressionRatio: 0,
+        [countField]: 1,
+        [ratioField]: ratio,
+        [durField]: duration,
+      } as any,
+    });
+  }
+
+  const prevCount = (existing as any)[countField] || 0;
+  const prevAvgRatio = (existing as any)[ratioField] || 0;
+  const prevAvgDur = (existing as any)[durField] || 0;
+  const newCount = prevCount + 1;
+  const newAvgRatio = ((prevAvgRatio * prevCount) + ratio) / newCount;
+  const newAvgDuration = ((prevAvgDur * prevCount) + duration) / newCount;
+
+  return client.systemStats.update({
+    where: { date: today },
+    data: {
+      [countField]: { increment: 1 },
+      [ratioField]: newAvgRatio,
+      [durField]: newAvgDuration,
+    } as any,
+  });
+}
+
 function categorizeMime(mime?: string): string {
   if (!mime) return 'Unknown';
   if (mime.startsWith('image/')) return 'Photo';
@@ -151,8 +201,7 @@ export async function POST(request: NextRequest) {
         compressionRatio,
         duration,
         endTime: new Date(),
-        // Optionally save algorithm, metadata
-        // algorithm,
+        algorithm: algorithm.toUpperCase(),
         // metadata
       },
     });
@@ -241,6 +290,13 @@ export async function POST(request: NextRequest) {
     const category = categorizeMime(mime);
     await updateCategoryStats({
       category,
+      ratio: compressionRatio,
+      duration,
+    });
+
+    //c) algorithm‐wise
+    await updateAlgorithmStats({
+      algorithm,
       ratio: compressionRatio,
       duration,
     });

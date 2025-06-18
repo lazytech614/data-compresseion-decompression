@@ -1,27 +1,63 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookOpen, TrendingUp, Activity, Cpu } from 'lucide-react';
 import PerformanceAnalyticsTab from './_components/performance-analytics';
 import AlgorithmComparisonTab from './_components/algorithm-comparison';
 import LearningResourcesTab from './_components/learning-resources';
 import AlgorithmDetailsTab from './_components/algorithm-details';
 
+// Define the shape of SystemStats coming from the API
+interface SystemStats {
+  date: string;
+  totalUsers: number;
+  totalCompressions: number;
+  totalDataProcessed: number;
+  avgCompressionRatio: number;
+  totalStorageUsed: number;
+  // category fields omitted for brevity
+  // algorithm fields omitted for brevity
+}
+
 const CompressVisualizePortal = () => {
   const [activeTab, setActiveTab] = useState('performance');
+  const [stats, setStats] = useState<SystemStats[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch system stats on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/system-stats');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data: SystemStats[] = await res.json();
+        setStats(data);
+      } catch (err: any) {
+        console.error('Failed to load system stats', err);
+        setError(err.message || 'Error fetching system stats');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   const renderTabContent = () => {
+    if (loading) return <div className="text-white p-4">Loading stats…</div>;
+    if (error) return <div className="text-red-400 p-4">Error: {error}</div>;
+
     switch (activeTab) {
       case 'performance':
-        return <PerformanceAnalyticsTab />;
+        return <PerformanceAnalyticsTab stats={stats} />;
       case 'comparison':
-        return <AlgorithmComparisonTab />;
+        return <AlgorithmComparisonTab stats={stats} />;
       case 'learning':
         return <LearningResourcesTab />;
       case 'algorithms':
         return <AlgorithmDetailsTab />;
       default:
-        return <PerformanceAnalyticsTab />;
+        return <PerformanceAnalyticsTab stats={stats} />;
     }
   };
 

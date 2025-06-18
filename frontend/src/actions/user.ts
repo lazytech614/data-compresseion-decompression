@@ -22,7 +22,6 @@ const incrementUserCountInSystemStats = async () => {
 
 export const onAuthenticateUser = async () => {
     try{
-        console.log("I am here in the onAuthenticateUser server action");
         const user = await currentUser()
         if(!user) {
             console.log("🔴No user found in the onAuthenticateUser server action");
