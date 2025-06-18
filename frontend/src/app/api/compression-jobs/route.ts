@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
       orderBy: { startTime: 'desc' }
     });
 
-    const serializedJobs = jobs.map(job => ({
+    const serializedJobs = jobs.map((job: any) => ({
       id:               job.id,
       status:           job.status,
       type:             job.type,
@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
       batchId:          job.batchId,
       priority:         job.priority,
 
-      inputFiles:  job.inputFiles.map(f => ({
+      inputFiles:  job.inputFiles.map((f: any) => ({
         id:           f.id,
         filename:     f.filename,
         originalName: f.originalName,
@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
         lastAccessed: f.lastAccessed.toISOString(),
       })),
 
-      outputFiles: job.outputFiles.map(f => ({
+      outputFiles: job.outputFiles.map((f: any) => ({
         id:           f.id,
         filename:     f.filename,
         originalName: f.originalName,
