@@ -10,12 +10,20 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  {
+    ignores: ["src/generated/prisma/**"],
+  },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
-  //TODO: Temoprarily disabling the any rule
   {
     files: ["**/*.ts", "**/*.tsx"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off", // 👈 disable here
+    },
+  },
+  {
+    files: ["src/generated/prisma/**"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
     },
   },
 ];
