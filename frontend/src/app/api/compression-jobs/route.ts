@@ -1,8 +1,3 @@
-// force this API route to be runtime‑only
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { client } from '@/lib/prisma'; 
 import { currentUser } from '@clerk/nextjs/server'; 
