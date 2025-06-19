@@ -6,8 +6,8 @@ export function calculateStats(
 ) {
   // reversed = true for decompression (newSize = compressed size; originalSize = decompressed size)
   const ratio = reversed
-    ? (newSize / originalSize).toFixed(3) // compressed/original
-    : (newSize / originalSize).toFixed(3); // compressed/original
+    ? (originalSize / newSize).toFixed(3) // compressed/original
+    : (originalSize / newSize).toFixed(3); // compressed/original
   return {
     originalSize, // bytes
     newSize, // bytes

@@ -9,22 +9,27 @@ function compress(inputBuffer) {
   }
 
   let output = "";
-  let count = 1;
-  let currentChar = input[0];
+  let i = 0;
 
-  for (let i = 1; i < input.length; i++) {
-    if (input[i] === currentChar) {
+  while (i < input.length) {
+    let count = 1;
+    let currentChar = input[i];
+
+    // Count consecutive identical characters
+    while (i + count < input.length && input[i + count] === currentChar) {
       count++;
-    } else {
-      // Output the run: character followed by count
-      output += currentChar + count;
-      currentChar = input[i];
-      count = 1;
     }
-  }
 
-  // Don't forget the last run
-  output += currentChar + count;
+    if (count >= 3) {
+      // Use RLE encoding: #<char><count>
+      output += "#" + currentChar + count;
+    } else {
+      // Output characters as-is (no compression benefit)
+      output += currentChar.repeat(count);
+    }
+
+    i += count;
+  }
 
   return {
     compressedBuffer: Buffer.from(output, "utf-8"),
@@ -43,22 +48,23 @@ function decompress(inputBuffer) {
   let i = 0;
 
   while (i < input.length) {
-    // Get the character
-    const char = input[i++];
+    if (input[i] === "#") {
+      // RLE encoded sequence
+      i++; // Skip the #
+      const char = input[i++];
 
-    // Get the count (may be multi-digit)
-    let numStr = "";
-    while (i < input.length && /[0-9]/.test(input[i])) {
-      numStr += input[i++];
+      // Get the count
+      let numStr = "";
+      while (i < input.length && /[0-9]/.test(input[i])) {
+        numStr += input[i++];
+      }
+
+      const count = parseInt(numStr, 10);
+      output += char.repeat(count);
+    } else {
+      // Regular character
+      output += input[i++];
     }
-
-    // Parse count and repeat character
-    const count = parseInt(numStr, 10);
-    if (isNaN(count)) {
-      throw new Error("Invalid RLE format: missing count");
-    }
-
-    output += char.repeat(count);
   }
 
   return { decompressedBuffer: Buffer.from(output, "utf-8") };
