@@ -2,8 +2,161 @@ import { NextRequest, NextResponse } from 'next/server';
 import { client } from '@/lib/prisma'; 
 import { currentUser } from '@clerk/nextjs/server'; 
 import { startOfToday } from 'date-fns';
+import { metadata } from '@/app/layout';
 
 type AlgoKey = 'huffman' | 'lz77' | 'lzw' | 'arithmetic';
+
+// Helper function to sanitize strings and remove null bytes
+function sanitizeString(str: string | null | undefined): string | null {
+  if (!str) return null;
+  if (typeof str !== 'string') return String(str);
+  
+  // More aggressive null byte removal
+  let cleaned = str
+    .replace(/\u0000/g, '') // Remove null bytes
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control characters
+    .replace(/\uFFFD/g, '') // Remove replacement characters
+    .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove additional control chars
+    .replace(/\0/g, '') // Remove literal null characters
+    .replace(/\\u0000/g, '') // Remove escaped null sequences
+    .replace(/\\0/g, ''); // Remove other null representations
+  
+  // If string becomes empty after cleaning, return null
+  return cleaned.trim() || null;
+}
+
+// Helper function to sanitize objects recursively with thorough null byte removal
+function sanitizeObject(obj: any): any {
+  if (obj === null || obj === undefined) return null;
+  
+  if (typeof obj === 'string') {
+    return sanitizeString(obj);
+  }
+  
+  if (typeof obj === 'number') {
+    return isNaN(obj) || !isFinite(obj) ? 0 : obj;
+  }
+  
+  if (typeof obj === 'boolean') {
+    return obj;
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(item => sanitizeObject(item)).filter(item => item !== null);
+  }
+  
+  if (typeof obj === 'object') {
+    const sanitized: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      // Sanitize the key itself
+      let sanitizedKey: string;
+      if (typeof key === 'string' && /^\d+$/.test(key)) {
+        // For numeric string keys, still sanitize them
+        const cleanKey = sanitizeString(key);
+        if (!cleanKey) continue;
+        sanitizedKey = cleanKey;
+      } else {
+        const cleanKey = sanitizeString(key);
+        if (!cleanKey) continue;
+        sanitizedKey = cleanKey;
+      }
+      
+      const sanitizedValue = sanitizeObject(value);
+      
+      if (sanitizedValue !== null && sanitizedValue !== undefined) {
+        sanitized[sanitizedKey] = sanitizedValue;
+      }
+    }
+    return Object.keys(sanitized).length > 0 ? sanitized : null;
+  }
+  
+  return obj;
+}
+
+// More thorough metadata sanitization
+function sanitizeMetadata(metadata: any): any {
+  if (!metadata || typeof metadata !== 'object') {
+    // If it's a string, sanitize it
+    if (typeof metadata === 'string') {
+      return sanitizeString(metadata);
+    }
+    return metadata;
+  }
+  
+  // Deep clean function that handles all data types
+  function deepClean(obj: any): any {
+    if (obj === null || obj === undefined) return obj;
+    
+    if (typeof obj === 'string') {
+      // Aggressive string cleaning
+      return obj
+        .replace(/\u0000/g, '')
+        .replace(/\0/g, '')
+        .replace(/\\u0000/g, '')
+        .replace(/\\0/g, '')
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+        .replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+    }
+    
+    if (typeof obj === 'number' || typeof obj === 'boolean') {
+      return obj;
+    }
+    
+    if (Array.isArray(obj)) {
+      return obj.map(deepClean);
+    }
+    
+    if (typeof obj === 'object') {
+      const cleaned: any = {};
+      for (const [key, value] of Object.entries(obj)) {
+        // Clean the key
+        const cleanKey = typeof key === 'string' 
+          ? key.replace(/\u0000/g, '').replace(/\0/g, '').replace(/\\u0000/g, '')
+          : key;
+        
+        if (cleanKey) {
+          cleaned[cleanKey] = deepClean(value);
+        }
+      }
+      return cleaned;
+    }
+    
+    return obj;
+  }
+  
+  return deepClean(metadata);
+}
+
+// Additional function to validate that no null bytes remain
+function validateNoNullBytes(obj: any, path: string = 'root'): boolean {
+  if (obj === null || obj === undefined) return true;
+  
+  if (typeof obj === 'string') {
+    if (obj.includes('\u0000') || obj.includes('\0')) {
+      console.error(`Null byte found in string at path: ${path}`, obj);
+      return false;
+    }
+    return true;
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.every((item, index) => 
+      validateNoNullBytes(item, `${path}[${index}]`)
+    );
+  }
+  
+  if (typeof obj === 'object') {
+    return Object.entries(obj).every(([key, value]) => {
+      if (key.includes('\u0000') || key.includes('\0')) {
+        console.error(`Null byte found in key at path: ${path}.${key}`);
+        return false;
+      }
+      return validateNoNullBytes(value, `${path}.${key}`);
+    });
+  }
+  
+  return true;
+}
 
 async function updateGlobalStats({
   bytesProcessed,
@@ -21,7 +174,7 @@ async function updateGlobalStats({
   let newAvgRatio = compressionRatio;
   if (existing && existing.totalCompressions > 0) {
     newAvgRatio =
-      ((existing.avgCompressionRatio * existing.totalCompressions) + compressionRatio) /
+      ((existing?.avgCompressionRatio ?? 0) * existing.totalCompressions + compressionRatio) /
       (existing.totalCompressions + 1);
   }
 
@@ -63,7 +216,7 @@ async function updateCategoryStats({
 
   const existing = await client.systemStats.findUnique({ where: { date: today } });
   if (!existing) {
-    // If stats row didn’t exist, create with just this category
+    // If stats row didn't exist, create with just this category
     return client.systemStats.create({
       data: {
         date: today,
@@ -144,7 +297,7 @@ async function updateAlgorithmStats({
   });
 }
 
-function categorizeMime(mime?: string): string {
+function categorizeMime(mime?: string | null): string {
   if (!mime) return 'Unknown';
   if (mime.startsWith('image/')) return 'Photo';
   if (mime.startsWith('video/')) return 'Video';
@@ -157,7 +310,7 @@ function categorizeMime(mime?: string): string {
   ) return 'Document';
   if (mime.startsWith('text/')) return 'Text';
   if (mime.startsWith('audio/')) return 'Audio';
-  return 'Other';
+  return 'Unknown';
 }
 
 export async function POST(request: NextRequest) {
@@ -173,6 +326,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Parse the request body
+    const rawData = await request.json();
+    
+    // Extract metadata before general sanitization
+    const rawMetadata = rawData.metadata;
+    
+    // Sanitize everything except metadata
+    const { metadata: _, ...dataWithoutMetadata } = rawData;
+    const sanitizedData = sanitizeObject(dataWithoutMetadata);
+    
+    // Handle metadata separately to preserve its structure
+    const sanitizedMetadata = rawMetadata ? sanitizeMetadata(rawMetadata) : null;
+    
+    // console.log('Raw metadata:', JSON.stringify(rawMetadata, null, 2));
+    // console.log('Sanitized metadata:', JSON.stringify(sanitizedMetadata, null, 2));
+    // console.log('Sanitized data keys:', Object.keys(sanitizedData || {}));
+    
+    // Validate that no null bytes remain in the sanitized data
+    if (!validateNoNullBytes(sanitizedData, 'sanitizedData')) {
+      console.error('Null bytes found in sanitized data!');
+      return NextResponse.json(
+        { error: 'Data contains invalid characters' },
+        { status: 400 }
+      );
+    }
+    
+    if (sanitizedMetadata && !validateNoNullBytes(sanitizedMetadata, 'sanitizedMetadata')) {
+      console.error('Null bytes found in sanitized metadata!');
+      return NextResponse.json(
+        { error: 'Metadata contains invalid characters' },
+        { status: 400 }
+      );
+    }
+
     const {
       type,
       algorithm,
@@ -183,86 +370,144 @@ export async function POST(request: NextRequest) {
       fileName,
       compressedBase64,
       decompressedBase64,
-      metadata,
       mimeType,
       status = 'COMPLETED',
       inputFiles = [],
       outputFiles = [],
-    } = await request.json();
+    } = sanitizedData || {};
 
-    // 1. Create Job
+    // Additional validation for critical fields
+    if (!type || !algorithm) {
+      return NextResponse.json(
+        { error: 'Missing required fields: type and algorithm' },
+        { status: 400 }
+      );
+    }
+
+    // Validate numeric fields
+    const validOriginalSize = Math.max(0, parseInt(originalSize) || 0);
+    if (isNaN(validOriginalSize) || validOriginalSize < 0) {
+      return NextResponse.json(
+        { error: 'Invalid originalSize value' },
+        { status: 400 }
+      );
+    }
+
+    // Sanitize critical string fields again for extra safety
+    const safeType = sanitizeString(type) || 'UNKNOWN';
+    const safeAlgorithm = sanitizeString(algorithm) || 'UNKNOWN';
+    const safeStatus = sanitizeString(status) || 'COMPLETED';
+    
+    // console.log('Sanitized values:', { safeType, safeAlgorithm, safeStatus });
+    // console.log('Final metadata to save:', JSON.stringify(sanitizedMetadata, null, 2));
+
+    // 1. Create Job with sanitized data and preserved metadata
     const job = await client.compressionJob.create({
       data: {
         userId: userRecord.id,
-        type: type.toUpperCase(),
-        status,
-        originalSize: BigInt(originalSize),
-        compressedSize: compressedSize ? BigInt(compressedSize) : null,
-        compressionRatio,
-        duration,
+        type: type.toUpperCase(), // Use sanitized values
+        status: status,
+        originalSize: BigInt(validOriginalSize),
+        compressedSize: compressedSize ? BigInt(Math.max(0, parseInt(compressedSize) || 0)) : null,
+        compressionRatio: parseFloat(compressionRatio) || 0,
+        compressedBase64,
+        decompressedBase64,
+        duration: parseFloat(duration) || 0,
         endTime: new Date(),
-        algorithm: algorithm.toUpperCase(),
-        // metadata
+        algorithm: algorithm.toUpperCase(), // Use sanitized values
+        metadata: sanitizedMetadata, // Use the specially handled metadata
       },
     });
 
-    // 2. Create Input Files
-    const inputFileCreates = inputFiles.map((f: any) =>
-      client.file.create({
+    // 2. Create Input Files with sanitized data
+    const inputFileCreates = (inputFiles || []).map((f: any) => {
+      const sanitizedFile = sanitizeObject(f);
+      if (!sanitizedFile) return null;
+      
+      // Validate file data doesn't contain null bytes
+      if (!validateNoNullBytes(sanitizedFile, 'inputFile')) {
+        console.error('Null bytes found in input file data');
+        return null;
+      }
+      
+      return client.file.create({
         data: {
           userId: userRecord.id,
-          filename: f.filename,
-          originalName: f.originalName,
-          mimeType: f.mimeType,
-          size: BigInt(f.size),
-          path: f.path || '',
-          checksum: '',
-          isTemporary: true,
+          filename: sanitizeString(sanitizedFile.filename) || 'unknown',
+          originalName: sanitizeString(sanitizedFile.originalName || sanitizedFile.filename) || 'unknown',
+          mimeType: sanitizeString(sanitizedFile.mimeType) || 'application/octet-stream',
+          size: BigInt(Math.max(0, parseInt(sanitizedFile.size) || 0)),
+          path: sanitizeString(sanitizedFile.path) || '',
+          checksum: sanitizeString(sanitizedFile.checksum) || '',
+          isTemporary: Boolean(sanitizedFile.isTemporary ?? true),
         },
-      })
-    );
-    const createdInputFiles = await Promise.all(inputFileCreates);
+      });
+    }).filter(Boolean);
+    
+    const createdInputFiles = inputFileCreates.length > 0 ? await Promise.all(inputFileCreates) : [];
 
-    // 3. Create Output Files
-    const outputFileCreates = outputFiles.map((f: any) =>
-      client.file.create({
+    // 3. Create Output Files with sanitized data
+    const outputFileCreates = (outputFiles || []).map((f: any) => {
+      const sanitizedFile = sanitizeObject(f);
+      if (!sanitizedFile) return null;
+      
+      // Validate file data doesn't contain null bytes
+      if (!validateNoNullBytes(sanitizedFile, 'outputFile')) {
+        console.error('Null bytes found in output file data');
+        return null;
+      }
+      
+      return client.file.create({
         data: {
           userId: userRecord.id,
-          filename: f.filename,
-          originalName: f.originalName,
-          mimeType: f.mimeType,
-          size: BigInt(f.size),
-          path: f.path || '',
-          checksum: '',
-          isTemporary: true,
+          filename: sanitizeString(sanitizedFile.filename) || 'unknown',
+          originalName: sanitizeString(sanitizedFile.originalName || sanitizedFile.filename) || 'unknown',
+          mimeType: sanitizeString(sanitizedFile.mimeType) || 'application/octet-stream',
+          size: BigInt(Math.max(0, parseInt(sanitizedFile.size) || 0)),
+          path: sanitizeString(sanitizedFile.path) || '',
+          checksum: sanitizeString(sanitizedFile.checksum) || '',
+          isTemporary: Boolean(sanitizedFile.isTemporary ?? true),
         },
-      })
-    );
-    const createdOutputFiles = await Promise.all(outputFileCreates);
+      });
+    }).filter(Boolean);
+    
+    const createdOutputFiles = outputFileCreates.length > 0 ? await Promise.all(outputFileCreates) : [];
 
     // 4. Link Input/Output Files
-    await client.compressionJob.update({
-      where: { id: job.id },
-      data: {
-        inputFiles: {
+    if (createdInputFiles.length > 0 || createdOutputFiles.length > 0) {
+      const updateData: any = {};
+      
+      if (createdInputFiles.length > 0) {
+        updateData.inputFiles = {
           connect: createdInputFiles.map(f => ({ id: f.id })),
-        },
-        outputFiles: {
+        };
+      }
+      
+      if (createdOutputFiles.length > 0) {
+        updateData.outputFiles = {
           connect: createdOutputFiles.map(f => ({ id: f.id })),
-        },
-      },
-    });
+        };
+      }
+
+      await client.compressionJob.update({
+        where: { id: job.id },
+        data: updateData,
+      });
+    }
 
     // 5. Optional: handle compressedBase64 / decompressedBase64 as virtual file
     if (fileName && (compressedBase64 || decompressedBase64)) {
+      const sanitizedFileName = sanitizeString(fileName) || 'compressed_file';
+      const sanitizedMimeType = sanitizeString(mimeType) || 'application/octet-stream';
+      
       const virtualFile = await client.file.create({
         data: {
           userId: userRecord.id,
-          filename: fileName,
-          originalName: fileName,
-          mimeType: mimeType || 'application/octet-stream',
-          size: BigInt(compressedSize || originalSize),
-          path: `/uploads/${fileName}`,
+          filename: sanitizedFileName,
+          originalName: sanitizedFileName,
+          mimeType: sanitizedMimeType,
+          size: BigInt(Math.max(0, parseInt(compressedSize || originalSize) || 0)),
+          path: `/uploads/${sanitizedFileName}`,
           checksum: '',
           isTemporary: true,
         },
@@ -278,27 +523,38 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Update statistics with validated data
+    const validCompressionRatio = parseFloat(compressionRatio) || 0;
+    const validDuration = parseFloat(duration) || 0;
+    const validCompressedSize = compressedSize ? Math.max(0, parseInt(compressedSize) || 0) : undefined;
+
     // a) global stats
     await updateGlobalStats({
-      bytesProcessed: originalSize,
-      compressionRatio,
-      storageUsed: compressedSize,
+      bytesProcessed: validOriginalSize,
+      compressionRatio: validCompressionRatio,
+      storageUsed: validCompressedSize,
     });
 
-    // b) category‐wise (assume first input file’s mimeType)
-    const mime = inputFiles[0]?.mimeType;
-    const category = categorizeMime(mime);
+    // b) category‐wise (assume first input file's mimeType)
+    const mime = (inputFiles && inputFiles[0]?.mimeType) || mimeType;
+    const category = categorizeMime(sanitizeString(mime));
     await updateCategoryStats({
       category,
-      ratio: compressionRatio,
-      duration,
+      ratio: validCompressionRatio,
+      duration: validDuration,
     });
 
     //c) algorithm‐wise
+    const cleanAlgorithm = safeAlgorithm.toLowerCase();
+    const validAlgorithms: AlgoKey[] = ['huffman', 'lz77', 'lzw', 'arithmetic'];
+    const algorithmKey = validAlgorithms.includes(cleanAlgorithm as AlgoKey) 
+      ? cleanAlgorithm as AlgoKey 
+      : 'huffman'; // default fallback
+      
     await updateAlgorithmStats({
-      algorithm,
-      ratio: compressionRatio,
-      duration,
+      algorithm: algorithmKey,
+      ratio: validCompressionRatio,
+      duration: validDuration,
     });
 
     return NextResponse.json({
@@ -312,8 +568,15 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error saving compression job:', error);
+    
+    // More detailed error logging
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to save compression job' },
+      { error: 'Failed to save compression job', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
@@ -338,6 +601,7 @@ export async function GET(request: NextRequest) {
         inputFiles:  true,
         outputFiles: true,
       },
+      
       orderBy: { startTime: 'desc' }
     });
 
@@ -355,6 +619,9 @@ export async function GET(request: NextRequest) {
       errorMessage:     job.errorMessage,
       batchId:          job.batchId,
       priority:         job.priority,
+      metadata:         job.metadata ?? null,
+      compressedBase64: job.compressedBase64 ?? null,     
+      decompressedBase64: job.decompressedBase64 ?? null, 
 
       inputFiles:  job.inputFiles.map((f: any) => ({
         id:           f.id,

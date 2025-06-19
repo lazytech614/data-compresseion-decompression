@@ -52,6 +52,9 @@ model CompressionJob {
   // Metadata
   batchId     String? // For batch operations
   priority    Priority @default(NORMAL)
+  metadata    Json?
+  compressedBase64      String?
+  decompressedBase64    String?
   
   // Relations
   user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -102,7 +105,7 @@ model SystemStats {
   totalUsers           Int      @default(0)
   totalCompressions    Int      @default(0)
   totalDataProcessed   BigInt   @default(0)
-  avgCompressionRatio  Float    @default(0)
+  avgCompressionRatio  Float?    @default(0)
   totalStorageUsed     BigInt   @default(0)
 
   // Category-wise stats

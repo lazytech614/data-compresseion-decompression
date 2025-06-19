@@ -3,9 +3,7 @@ import { redirect } from 'next/navigation'
 import React from 'react'
 
 const AuthCallbackPage = async () => {
-  console.log("I am here in the AuthCallbackPage");
   const auth = await onAuthenticateUser()
-  console.log("AuthCallbackPage: ", auth);
   if(auth.status === 200 || auth.status === 201) {
     return redirect('/dashboard/overview')
   }

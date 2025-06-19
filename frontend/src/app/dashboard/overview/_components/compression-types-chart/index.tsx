@@ -3,6 +3,16 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 const CompressionTypesChart = ({ data }: any) => {
   const totalItems = data.reduce((total: any, item: any) => total + item.value, 0);
 
+  // Guard: if no data or total is zero, render a placeholder or nothing
+  if (!data || data.length === 0 || totalItems === 0) {
+    return (
+      <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+        <h3 className="text-lg font-semibold text-white mb-6">File Types</h3>
+        <div className="text-slate-400 text-sm">No file type data to display.</div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
       <h3 className="text-lg font-semibold text-white mb-6">File Types</h3>
@@ -18,7 +28,7 @@ const CompressionTypesChart = ({ data }: any) => {
               paddingAngle={0}
               dataKey="value"
             >
-              {data.map((entry: any, index: any) => (
+              {data?.map((entry: any, index: any) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Pie>
@@ -38,13 +48,13 @@ const CompressionTypesChart = ({ data }: any) => {
       <div className="grid grid-cols-2 gap-4 mt-4">
         {(() => {
           // Step 1: calculate raw percentages
-          const percentages = data.map((item: any) => ({
+          const percentages = data?.map((item: any) => ({
             ...item,
             rawPercent: (item.value / totalItems) * 100,
           }));
 
           // Step 2: floor the values
-          const rounded = percentages.map((p: any) => ({
+          const rounded = percentages?.map((p: any) => ({
             ...p,
             displayPercent: Math.floor(p.rawPercent),
           }));

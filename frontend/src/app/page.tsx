@@ -41,12 +41,16 @@ interface CompressionJob {
   originalSize: string;
   compressedSize?: string;
   compressionRatio?: number;
+  metadata: any;
+  compressedBase64?: string;
+  decompressedBase64?: string;
   duration?: number;
   startTime: string;
   endTime?: string;
   inputFiles: any[];
   mimeType: string;
   outputFiles: any[];
+  algorithm: string;
 }
 
 export default function CompressionPortal() {
@@ -58,12 +62,20 @@ export default function CompressionPortal() {
   const [mode, setMode] = useState<'compress' | 'decompress'>('compress');
   const [loading, setLoading] = useState(false);
   const [savedResults, setSavedResults] = useState<CompressionJob[]>([]);
-  const [selectedMetadataFile, setSelectedMetadataFile] = useState<string>('');
+  const [selectedJobId, setSelectedJobId] = useState<string>('');
 
   // Load compression jobs from database on component mount
   useEffect(() => {
     loadCompressionJobs();
   }, []);
+
+  // Clear file selection when switching to decompress mode
+  useEffect(() => {
+    if (mode === 'decompress') {
+      setFile(null);
+      setSelectedJobId('');
+    }
+  }, [mode]);
 
   const loadCompressionJobs = async () => {
     try {
@@ -75,99 +87,207 @@ export default function CompressionPortal() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
+  
+  if (mode === 'compress') {
     if (!file || !selectedAlgo) {
       return alert('Choose a file and algorithm.');
     }
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('algorithm', selectedAlgo);
-
-    if (mode === 'decompress') {
-      const selected = savedResults.find((r) => 
-        r.outputFiles.some(f => f.filename === selectedMetadataFile)
-      );
-      if (!selected) {
-        return alert('No metadata found for selected file.');
-      }
-      // You might need to store metadata differently in your database
-      // For now, we'll pass the job ID
-      formData.append('jobId', selected.id);
+  } else {
+    // Decompress mode
+    if (!selectedJobId || !selectedAlgo) {
+      return alert('Choose a previously compressed file and algorithm.');
     }
+  }
 
-    setLoading(true);
+  const formData = new FormData();
+  
+  if (mode === 'compress') {
+    formData.append('file', file!);
+    formData.append('algorithm', selectedAlgo);
+  } else {
+    // For decompress, we need to get the selected job
+    const selectedJob = savedResults.find(job => job.id === selectedJobId);
+    if (!selectedJob) {
+      return alert('Selected file not found.');
+    }
+    
+    // Check if we have compressed data stored
+    if (!selectedJob.metadata || !selectedJob.compressedBase64) {
+      return alert('No compressed data found for this job. Cannot decompress.');
+    }
+    
     try {
-      const data: ApiResult =
-        mode === 'compress'
-          ? await postCompression(formData)
-          : await postDecompression(formData);
+      // Convert base64 compressed data back to binary
+      const compressedBase64 = selectedJob.compressedBase64;
+      const compressedBinary = atob(compressedBase64);
+      const compressedBytes = new Uint8Array(compressedBinary.length);
+      for (let i = 0; i < compressedBinary.length; i++) {
+        compressedBytes[i] = compressedBinary.charCodeAt(i);
+      }
+      
+      // Create a File object from the compressed data
+      const compressedFile = new File(
+        [compressedBytes], 
+        `${selectedJob.inputFiles[0]?.originalName || 'compressed'}_${selectedJob.algorithm}_compressed.bin`,
+        { type: 'application/octet-stream' }
+      );
+      
+      // Add the compressed file to FormData
+      formData.append('file', compressedFile);
+      formData.append('algorithm', selectedAlgo);
+      
+      // Add metadata (excluding compressedBase64 to avoid sending it twice)
+      const metadataForDecompression = { ...selectedJob.metadata };
+      delete metadataForDecompression.compressedBase64;
+      formData.append('metadata', JSON.stringify(metadataForDecompression));
+      
+    } catch (error) {
+      console.error('Error reconstructing compressed file:', error);
+      return alert('Error reconstructing compressed file data.');
+    }
+  }
 
-      // Save to database instead of localStorage
+  // Debug: Check FormData contents
+  console.log("FormData entries:");
+  for (let [key, value] of formData.entries()) {
+    console.log(`${key}:`, value);
+  }
+
+  setLoading(true);
+  try {
+    console.log("Formdata from page", formData);
+    const data: ApiResult =
+      mode === 'compress'
+        ? await postCompression(formData)
+        : await postDecompression(formData);
+
+    // Save to database
+    const jobData = {
+      type: mode,
+      algorithm: selectedAlgo,
+      fileName: data.fileName,
+      originalSize: data.stats.originalSize,
+      compressedSize: data.stats.newSize,
+      compressionRatio: data.stats.compressionRatio,
+      duration: data.stats.timeMs,
+      compressedBase64: data.compressedBase64,
+      decompressedBase64: data.decompressedBase64,
+      metadata: data.metadata,
+      status: 'COMPLETED'
+    };
+
+    if (mode === 'compress') {
       await saveCompressionJob({
-        type: mode,
-        algorithm: selectedAlgo,
-        fileName: data.fileName,
-        originalSize: data.stats.originalSize,
-        compressedSize: data.stats.newSize,
-        compressionRatio: data.stats.compressionRatio,
-        duration: data.stats.timeMs,
-        compressedBase64: data.compressedBase64,
-        decompressedBase64: data.decompressedBase64,
-        metadata: data.metadata,
-        mimeType: file.type,
+        ...jobData,
+        mimeType: file!.type,
         inputFiles: [{
-          filename: file.name,
-          originalName: file.name,
-          mimeType: file.type,
-          size: file.size,
-          path: "", // depends on your storage
+          filename: file!.name,
+          originalName: file!.name,
+          mimeType: file!.type,
+          size: file!.size,
+          path: "",
         }],
         outputFiles: data.compressedBase64 ? [{
           filename: data.fileName,
-          originalName: file.name,
+          originalName: file!.name,
           mimeType: "application/octet-stream",
           size: data.stats.newSize,
           path: "",
         }] : [],
-        status: 'COMPLETED'
       });
+    } else {
+      // For decompress, use data from the selected job
+      const selectedJob = savedResults.find(job => job.id === selectedJobId)!;
+      await saveCompressionJob({
+        ...jobData,
+        mimeType: selectedJob.mimeType,
+        inputFiles: [{
+          filename: selectedJob.outputFiles[0]?.filename || 'compressed_file',
+          originalName: selectedJob.outputFiles[0]?.originalName || 'unknown',
+          mimeType: "application/octet-stream",
+          size: parseInt(selectedJob.compressedSize || '0'),
+          path: "",
+        }],
+        outputFiles: data.decompressedBase64 ? [{
+          filename: data.fileName,
+          originalName: selectedJob.inputFiles[0]?.originalName || 'decompressed_file',
+          mimeType: selectedJob.mimeType,
+          size: data.stats.newSize,
+          path: "",
+        }] : [],
+      });
+    }
 
-      // Reload jobs to update the list
-      await loadCompressionJobs();
+    // Reload jobs to update the list
+    await loadCompressionJobs();
 
-      router.push('/result');
-    } catch (err) {
-      console.error(err);
-      alert('Error while processing. See console.');
-      
-      // Save failed job to database
-      try {
+    router.push('/result');
+  } catch (err) {
+    console.error(err);
+    alert('Error while processing. See console.');
+    
+    // Save failed job to database
+    try {
+      const failedJobData = {
+        type: mode,
+        algorithm: selectedAlgo,
+        status: 'FAILED',
+        errorMessage: (err as Error).message,
+        outputFiles: [],
+      };
+
+      if (mode === 'compress') {
         await saveCompressionJob({
-          type: mode,
-          algorithm: selectedAlgo,
-          fileName: file.name,
-          originalSize: file.size,
-          status: 'FAILED',
-          mimeType: file.type,
-          errorMessage: (err as Error).message,
+          ...failedJobData,
+          fileName: file!.name,
+          originalSize: file!.size,
+          mimeType: file!.type,
           inputFiles: [{
-            filename: file.name,
-            originalName: file.name,
-            mimeType: file.type,
-            size: file.size,
-            path: "", // depends on your storage
+            filename: file!.name,
+            originalName: file!.name,
+            mimeType: file!.type,
+            size: file!.size,
+            path: "",
           }],
-          outputFiles: [],
         });
-        await loadCompressionJobs();
-      } catch (saveError) {
-        console.error('Failed to save error job:', saveError);
+      } else {
+        const selectedJob = savedResults.find(job => job.id === selectedJobId);
+        if (selectedJob) {
+          await saveCompressionJob({
+            ...failedJobData,
+            fileName: selectedJob.outputFiles[0]?.filename || 'unknown',
+            originalSize: parseInt(selectedJob.compressedSize || '0'),
+            mimeType: selectedJob.mimeType,
+            inputFiles: [{
+              filename: selectedJob.outputFiles[0]?.filename || 'compressed_file',
+              originalName: selectedJob.outputFiles[0]?.originalName || 'unknown',
+              mimeType: "application/octet-stream",
+              size: parseInt(selectedJob.compressedSize || '0'),
+              path: "",
+            }],
+          });
+        }
       }
-    } finally {
-      setLoading(false);
+      await loadCompressionJobs();
+    } catch (saveError) {
+      console.error('Failed to save error job:', saveError);
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
+  // Check if form is valid for submission
+  const isFormValid = () => {
+    if (mode === 'compress') {
+      return file && selectedAlgo;
+    } else {
+      return selectedJobId && selectedAlgo;
     }
   };
+
+  console.log("Saved results", savedResults);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -234,7 +354,58 @@ export default function CompressionPortal() {
               </div>
             </div>
 
-            <FileUploader onFileSelect={setFile} file={file} />
+            {/* File Uploader - Only show in compress mode */}
+            {mode === 'compress' && (
+              <FileUploader onFileSelect={setFile} file={file} />
+            )}
+
+            {/* File Selector - Only show in decompress mode */}
+            {mode === 'decompress' && (
+              <div>
+                <label className="block text-sm font-semibold text-slate-300 mb-3">
+                  Select Previously Compressed File
+                </label>
+                {savedResults.filter(r => 
+                  r.type === 'COMPRESS' && 
+                  r.status === 'COMPLETED' && 
+                  r.metadata &&
+                  (
+                    (Array.isArray(r.metadata) && r.metadata.length > 0) ||
+                    (!Array.isArray(r.metadata) && typeof r.metadata === 'object' && Object.keys(r.metadata).length > 0)
+                  )
+                ).length > 0 ? (
+                  <select
+                    value={selectedJobId}
+                    onChange={(e) => setSelectedJobId(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-slate-300 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    <option value="">Select a compressed file to decompress</option>
+                    {savedResults
+                      .filter((r) => 
+                        r.type === 'COMPRESS' && 
+                        r.status === 'COMPLETED' && 
+                        r.compressedBase64 &&
+                        r.metadata &&
+                        (
+                          (Array.isArray(r.metadata) && r.metadata.length > 0) ||
+                          (!Array.isArray(r.metadata) && typeof r.metadata === 'object' && Object.keys(r.metadata).length > 0)
+                        ))
+                      .map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.outputFiles[0]?.originalName || r.inputFiles[0]?.originalName || `Job ${r.id.slice(0, 8)}`} 
+                          ({new Date(r.startTime).toLocaleDateString()}) - {r.algorithm}
+                        </option>
+                      ))}
+                  </select>
+                ) : (
+                  <div className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-4 py-8 text-center">
+                    <FileText className="w-12 h-12 text-slate-500 mx-auto mb-3" />
+                    <p className="text-slate-400">No compressed files available for decompression</p>
+                    <p className="text-slate-500 text-sm mt-1">Compress some files first to see them here</p>
+                  </div>
+                )}
+              </div>
+            )}
 
             <AlgorithmSelector
               algorithms={algorithms}
@@ -242,33 +413,10 @@ export default function CompressionPortal() {
               onChange={setSelectedAlgo}
             />
 
-            {mode === 'decompress' && savedResults.length > 0 && (
-              <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-3">
-                  Select Previously Compressed File
-                </label>
-                <select
-                  value={selectedMetadataFile}
-                  onChange={(e) => setSelectedMetadataFile(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-slate-300 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                >
-                  <option value="">Select a file</option>
-                  {savedResults
-                    .filter((r) => r.type === 'COMPRESS' && r.status === 'COMPLETED')
-                    .map((r) => (
-                      <option key={r.id} value={r.outputFiles[0]?.filename || r.id}>
-                        {r.outputFiles[0]?.originalName || `Job ${r.id.slice(0, 8)}`} 
-                        ({new Date(r.startTime).toLocaleDateString()})
-                      </option>
-                    ))}
-                </select>
-              </div>
-            )}
-
             <button
               onClick={handleSubmit}
               type="submit"
-              disabled={loading || !file || !selectedAlgo}
+              disabled={loading || !isFormValid()}
               className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-slate-600 disabled:to-slate-700 text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed flex items-center justify-center space-x-2 text-lg"
             >
               {loading ? (
@@ -302,10 +450,10 @@ export default function CompressionPortal() {
                   <div key={job.id} className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg">
                     <div>
                       <p className="text-white font-medium">
-                        {job.type} - {job.outputFiles[0]?.originalName || 'Unknown'}
+                        {job.type} - {job.outputFiles[0]?.originalName || job.inputFiles[0]?.originalName || 'Unknown'}
                       </p>
                       <p className="text-slate-400 text-sm">
-                        {new Date(job.startTime).toLocaleString()}
+                        {new Date(job.startTime).toLocaleString()} - {job.algorithm}
                       </p>
                     </div>
                     <div className="text-right">

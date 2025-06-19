@@ -146,9 +146,6 @@ const PerformanceAnalyticsTab: React.FC<PerformanceAnalyticsTabProps> = ({ stats
     }
   }, [stats]);
 
-
-  console.log("File type data: ", fileTypeData);
-
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
