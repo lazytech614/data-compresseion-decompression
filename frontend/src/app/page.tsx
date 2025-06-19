@@ -19,6 +19,7 @@ import {
   saveCompressionJob,
   getCompressionJobs
 } from '../../utils/api';
+import { useAuth } from "@clerk/nextjs";
 
 interface ApiResult {
   fileName: string;
@@ -55,6 +56,7 @@ interface CompressionJob {
 
 export default function CompressionPortal() {
   const router = useRouter();
+  const {isSignedIn, userId} = useAuth();
 
   const [file, setFile] = useState<File | null>(null);
   const [algorithms, setAlgorithms] = useState(ALGORITHMS);
@@ -88,6 +90,10 @@ export default function CompressionPortal() {
 
   const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
+  if(!isSignedIn) {
+    router.push('/auth/sign-in');
+    return
+  }
   
   if (mode === 'compress') {
     if (!file || !selectedAlgo) {
@@ -375,21 +381,20 @@ export default function CompressionPortal() {
                   >
                     <option value="">Select a compressed file to decompress</option>
                     {savedResults
-                      .filter((r) => 
-                        r.type === 'COMPRESS' && 
-                        r.status === 'COMPLETED' && 
-                        r.compressedBase64 &&
-                        r.metadata &&
-                        (
-                          (Array.isArray(r.metadata) && r.metadata.length > 0) ||
-                          (!Array.isArray(r.metadata) && typeof r.metadata === 'object' && Object.keys(r.metadata).length > 0)
-                        ))
-                      .map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.outputFiles[0]?.originalName || r.inputFiles[0]?.originalName || `Job ${r.id.slice(0, 8)}`} 
-                          ({new Date(r.startTime).toLocaleDateString()}) - {r.algorithm}
-                        </option>
-                      ))}
+                    .filter(r =>
+                      r.type === 'COMPRESS' &&
+                      r.status === 'COMPLETED' &&
+                      r.compressedBase64 &&
+                      r.metadata
+                    )
+                    .map(r => (
+                      <option key={r.id} value={r.id}>
+                        {r.outputFiles[0]?.originalName
+                          || r.inputFiles[0]?.originalName
+                          || `Job ${r.id.slice(0, 8)}`} 
+                        ({new Date(r.startTime).toLocaleDateString()}) - {r.algorithm}
+                      </option>
+                    ))}
                   </select>
                 ) : (
                   <div className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-4 py-8 text-center">

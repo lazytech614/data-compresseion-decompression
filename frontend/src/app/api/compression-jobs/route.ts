@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { client } from '@/lib/prisma'; 
 import { currentUser } from '@clerk/nextjs/server'; 
-import { startOfToday } from 'date-fns';
-import { metadata } from '@/app/layout';
 
 type AlgoKey = 'huffman' | 'lz77' | 'lzw' | 'arithmetic';
 

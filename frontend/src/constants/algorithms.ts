@@ -2,7 +2,6 @@ export const ALGORITHMS = [
   { id: 'huffman', name: 'Huffman Coding', desc: 'Lossless compression algorithm' },
   { id: 'lz77', name: 'LZ77', desc: 'Dictionary-based compression' },
   { id: 'lzw', name: 'LZW', desc: 'Lempel-Ziv-Welch algorithm' },
-  { id: 'arithmetic', name: 'Arithmetic Coding', desc: 'Entropy encoding method' },
   { id: 'rle', name: 'Run-Length Encoding', desc: 'Simple lossless compression' }
 ];
 
@@ -36,16 +35,6 @@ export const ALGORITHM_DETAILS = [
     pros: ['Fast compression', 'Good for repetitive data', 'Single pass algorithm'],
     cons: ['Patent issues (expired)', 'Dictionary size limits', 'Not optimal for all data'],
     learnMore: 'https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Welch'
-  },
-  {
-    name: 'Arithmetic Coding',
-    type: 'Lossless',
-    complexity: 'O(n)',
-    bestFor: 'High compression ratio needs',
-    description: 'Entropy encoding that approaches theoretical compression limits',
-    pros: ['Excellent compression ratio', 'Adaptive', 'Handles any alphabet'],
-    cons: ['Complex implementation', 'Slower processing', 'Precision requirements'],
-    learnMore: 'https://en.wikipedia.org/wiki/Arithmetic_coding'
   },
   {
     name: 'Run-Length Encoding (RLE)',
