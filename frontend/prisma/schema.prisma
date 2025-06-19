@@ -98,8 +98,10 @@ model File {
 }
 
 model SystemStats {
-  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  date                 DateTime @unique @default(now())
+  id                   String   @id @default("global") 
+  date                 DateTime?  @default(now())
+  firstEntryDate       DateTime?
+  lastUpdated          DateTime @default(now())
 
   // Daily metrics
   totalUsers           Int      @default(0)

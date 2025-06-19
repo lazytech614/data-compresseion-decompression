@@ -38,10 +38,9 @@ const RecentJobs = ({ jobs }: any) => {
     <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-white">Recent Jobs</h3>
-        <button className="text-blue-400 hover:text-blue-300 text-sm font-medium">View All</button>
       </div>
       <div className="space-y-4">
-        {jobs.map((job: any) => (
+        {jobs.slice(0, 10).map((job: any) => (
           <div key={job.id} className="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg border border-slate-600">
             <div className="flex items-center space-x-4">
               {getStatusIcon(job.status)}

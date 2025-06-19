@@ -34,7 +34,7 @@ export default function GlobalHeader() {
               </Link>
 
               {/* Desktop nav */}
-              <nav className="hidden md:flex space-x-8">
+              <nav className="hidden md:flex space-x-8 absolute left-1/2 -translate-x-1/2">
                 {NAV_LINKS.map((link) => {
                   const isActive = link.href === '/'
                     ? pathname === '/'

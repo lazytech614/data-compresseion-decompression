@@ -156,6 +156,7 @@ export default function CompressionPortal() {
         : await postDecompression(formData);
 
     // Save to database
+    console.log("🤖🤖Metadata: ", data.metadata);
     const jobData = {
       type: mode,
       algorithm: selectedAlgo,
@@ -170,8 +171,9 @@ export default function CompressionPortal() {
       status: 'COMPLETED'
     };
 
+    let savedJob;
     if (mode === 'compress') {
-      await saveCompressionJob({
+      savedJob = await saveCompressionJob({
         ...jobData,
         mimeType: file!.type,
         inputFiles: [{
@@ -192,7 +194,7 @@ export default function CompressionPortal() {
     } else {
       // For decompress, use data from the selected job
       const selectedJob = savedResults.find(job => job.id === selectedJobId)!;
-      await saveCompressionJob({
+      savedJob = await saveCompressionJob({
         ...jobData,
         mimeType: selectedJob.mimeType,
         inputFiles: [{
@@ -213,9 +215,10 @@ export default function CompressionPortal() {
     }
 
     // Reload jobs to update the list
+    const jobId = savedJob.jobId;
     await loadCompressionJobs();
 
-    router.push('/result');
+    router.push(`/result?jobId=${jobId}`);  
   } catch (err) {
     console.error(err);
     alert('Error while processing. See console.');
@@ -263,13 +266,13 @@ export default function CompressionPortal() {
         }
       }
       await loadCompressionJobs();
-    } catch (saveError) {
-      console.error('Failed to save error job:', saveError);
+      } catch (saveError) {
+        console.error('Failed to save error job:', saveError);
+      }
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // Check if form is valid for submission
   const isFormValid = () => {

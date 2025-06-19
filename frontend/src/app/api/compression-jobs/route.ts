@@ -167,10 +167,10 @@ async function updateGlobalStats({
   compressionRatio: number;
   storageUsed?: number;
 }) {
-  const today = startOfToday();
+  const GLOBAL_STATS_ID = "global";
 
   // Recalculate avgCompressionRatio as running average
-  const existing = await client.systemStats.findUnique({ where: { date: today } });
+  const existing = await client.systemStats.findUnique({ where: { id: GLOBAL_STATS_ID } });
   let newAvgRatio = compressionRatio;
   if (existing && existing.totalCompressions > 0) {
     newAvgRatio =
@@ -179,21 +179,23 @@ async function updateGlobalStats({
   }
 
   await client.systemStats.upsert({
-    where: { date: today },
+    where: { id: GLOBAL_STATS_ID },
     update: {
       totalCompressions: { increment: 1 },
       totalDataProcessed: { increment: BigInt(bytesProcessed) },
       totalStorageUsed: storageUsed ? { increment: BigInt(storageUsed) } : undefined,
       avgCompressionRatio: newAvgRatio,
+      lastUpdated: new Date(),
     },
     create: {
-      date: today,
-      totalUsers: 0,
+      id: GLOBAL_STATS_ID,
+      firstEntryDate: new Date(),
+      lastUpdated: new Date(),
+      totalUsers: 1,
       totalCompressions: 1,
       totalDataProcessed: BigInt(bytesProcessed),
       totalStorageUsed: BigInt(storageUsed || 0),
       avgCompressionRatio: compressionRatio,
-      // category fields will be updated by updateCategoryStats
     },
   });
 }
@@ -207,20 +209,20 @@ async function updateCategoryStats({
   ratio: number;
   duration: number;
 }) {
-  const today = startOfToday();
+  const GLOBAL_STATS_ID = "global";
   const field = (x: string) => x.toLowerCase().replace(/[^a-z]/g, '');
 
   const countField = `${field(category)}Count` as keyof typeof client.systemStats;
   const ratioField = `${field(category)}AvgRatio` as keyof typeof client.systemStats;
   const durField = `${field(category)}AvgDuration` as keyof typeof client.systemStats;
 
-  const existing = await client.systemStats.findUnique({ where: { date: today } });
+  const existing = await client.systemStats.findUnique({ where: { id: GLOBAL_STATS_ID } });
   if (!existing) {
     // If stats row didn't exist, create with just this category
     return client.systemStats.create({
       data: {
-        date: today,
-        totalUsers: 0,
+        id: GLOBAL_STATS_ID,
+        totalUsers: 1,
         totalCompressions: 0,
         totalDataProcessed: BigInt(0),
         totalStorageUsed: BigInt(0),
@@ -240,7 +242,7 @@ async function updateCategoryStats({
   const newAvgDuration = ((prevAvgDur * prevCount) + duration) / (prevCount + 1);
 
   return client.systemStats.update({
-    where: { date: today },
+    where: { id: GLOBAL_STATS_ID },
     data: {
       [countField]: { increment: 1 },
       [ratioField]: newAvgRatio,
@@ -258,17 +260,17 @@ async function updateAlgorithmStats({
   ratio: number;
   duration: number;
 }) {
-  const today = startOfToday();
+  const GLOBAL_STATS_ID = "global";
   const countField = `${algorithm}Count` as keyof typeof client.systemStats;
   const ratioField = `${algorithm}AvgRatio` as keyof typeof client.systemStats;
   const durField = `${algorithm}AvgDuration` as keyof typeof client.systemStats;
 
-  const existing = await client.systemStats.findUnique({ where: { date: today } });
+  const existing = await client.systemStats.findUnique({ where: { id: GLOBAL_STATS_ID } });
   if (!existing) {
     return client.systemStats.create({
       data: {
-        date: today,
-        totalUsers: 0,
+        id: GLOBAL_STATS_ID,
+        totalUsers: 1,
         totalCompressions: 0,
         totalDataProcessed: BigInt(0),
         totalStorageUsed: BigInt(0),
@@ -288,7 +290,7 @@ async function updateAlgorithmStats({
   const newAvgDuration = ((prevAvgDur * prevCount) + duration) / newCount;
 
   return client.systemStats.update({
-    where: { date: today },
+    where: { id: GLOBAL_STATS_ID },
     data: {
       [countField]: { increment: 1 },
       [ratioField]: newAvgRatio,

@@ -1,112 +1,144 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from 'react';
+import { ArrowLeft, Share2 } from 'lucide-react';
+import StatusCard from './_components/status-card';
+import FileDetailsCard from './_components/file-details-card';
+import PerformanceMetrics from './_components/performance-matrics';
+import QuickActions from './_components/quick-actions';
+import CompressionStats from './_components/compression-stats';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-interface Stats {
-  originalSize: number;
-  newSize: number;
-  compressionRatio: number;
-  timeMs: number;
+interface InputFile {
+  id: string
+  filename: string
+  originalName: string
+  mimeType: string
+  size: string
+  path: string
+  url?: string
+  // ...other fields if needed
 }
 
-interface StoredResult {
-  mode: "compress" | "decompress";
-  fileName: string;
-  stats: Stats;
-  compressedBase64?: string;
-  decompressedBase64?: string;
-  metadata?: any;
+interface OutputFile extends InputFile {}
+
+interface JobDetails {
+  id: string
+  status: string
+  type: string
+  quality?: number | null
+  algorithm?: string | null
+  originalSize: string
+  compressedSize?: string | null
+  compressionRatio?: number | null
+  startTime: string
+  endTime?: string | null
+  duration?: number | null
+  errorMessage?: string | null
+  batchId?: string | null
+  priority?: string
+  metadata?: any
+  compressedBase64?: string | null
+  decompressedBase64?: string | null
+  inputFiles: InputFile[]
+  outputFiles: OutputFile[]
 }
 
-export default function ResultPage() {
-  const router = useRouter();
-  const [result, setResult] = useState<StoredResult | null>(null);
+const ResultPage = () => {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const jobId = searchParams.get('jobId')
+  const [job, setJob] = useState<JobDetails | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    try {
-      const json = localStorage.getItem("compressionResults");
-      if (!json) {
-        router.replace("/");
-        return;
-      }
-      const allResults: StoredResult[] = JSON.parse(json);
-      const latestResult = allResults[allResults.length - 1];
-      if (!latestResult) {
-        router.replace("/");
-        return;
-      }
-      setResult(latestResult);
-      // Optionally clear it so reloading won't persist old data:
-      // localStorage.removeItem("compressionResult");
-    } catch {
-      router.replace("/");
+    if (!jobId) {
+      router.replace('/')
+      return
     }
-  }, [router]);
+    // Fetch the job
+    ;(async () => {
+      try {
+        const res = await fetch(`/api/compression-jobs/${jobId}`)
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => null)
+          throw new Error(errJson?.error || 'Failed to fetch job')
+        }
+        const json = await res.json()
+        setJob(json.job)
+      } catch (e: any) {
+        console.error(e)
+        setError(e.message || 'Error loading job')
+      } finally {
+        setLoading(false)
+      }
+    })()
+  }, [jobId, router])
 
-  if (!result) {
+  if (loading) {
     return (
-      <div className="p-8 text-center">
-        <p>Loading results…</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-white">Loading result…</p>
       </div>
-    );
+    )
+  }
+  if (error || !job) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4">
+        <p className="text-red-400 mb-4">{error || 'Job not found'}</p>
+        <button
+          onClick={() => router.push('/')}
+          className="text-blue-400 underline"
+        >
+          Go back
+        </button>
+      </div>
+    )
   }
 
-  const { mode, fileName, stats, compressedBase64, decompressedBase64 } = result;
-  const payloadBase64 =
-    mode === "compress" ? compressedBase64 : decompressedBase64;
-  const downloadName = `${mode === "compress" ? "compressed" : "decompressed"}_${fileName}`;
-
-  const handleDownload = () => {
-    if (!payloadBase64) return;
-    const link = document.createElement("a");
-    link.href = `data:application/octet-stream;base64,${payloadBase64}`;
-    link.download = downloadName;
-    link.click();
-  };
+  console.log("Job:", job);
 
   return (
-    <div className="min-h-screen flex flex-col items-center pt-12 px-4 bg-gray-50">
-      <h2 className="text-2xl font-semibold mb-6">
-        {mode === "compress" ? "Compression" : "Decompression"} Results
-      </h2>
-
-      <div className="w-full max-w-md bg-white p-6 rounded-lg shadow mb-6">
-        <table className="w-full text-left">
-          <tbody>
-            <tr>
-              <td className="py-1">Original Size:</td>
-              <td className="py-1 font-medium">{stats.originalSize} bytes</td>
-            </tr>
-            <tr>
-              <td className="py-1">New Size:</td>
-              <td className="py-1 font-medium">{stats.newSize} bytes</td>
-            </tr>
-            <tr>
-              <td className="py-1">Compression Ratio:</td>
-              <td className="py-1 font-medium">{stats.compressionRatio}</td>
-            </tr>
-            <tr>
-              <td className="py-1">Time Taken:</td>
-              <td className="py-1 font-medium">{stats.timeMs} ms</td>
-            </tr>
-          </tbody>
-        </table>
+    <div className="min-h-screen bg-slate-900 text-white">
+      {/* Header */}
+      <div className="bg-slate-800 border-b border-slate-700 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <button onClick={() => router.push('/')} className="flex items-center space-x-2 text-slate-400 hover:text-white transition-colors">
+              <ArrowLeft className="h-5 w-5" />
+              <span>Back to Home</span>
+            </button>
+            <div className="h-6 w-px bg-slate-600" />
+            <h1 className="text-xl font-semibold">{job.type === 'DECOMPRESS' ? 'Decompression' : 'Compression'} Result</h1>
+          </div>
+          <div className="flex items-center space-x-3">
+            <button className="flex items-center space-x-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">
+              <Share2 className="h-4 w-4" />
+              <span>Share</span>
+            </button>
+          </div>
+        </div>
       </div>
 
-      <button
-        onClick={handleDownload}
-        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
-      >
-        Download {downloadName}
-      </button>
-
-      <button
-        onClick={() => router.push("/")}
-        className="mt-6 text-blue-600 underline"
-      >
-        &larr; Compress/Decompress Another File
-      </button>
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            <StatusCard job={job} />
+            <FileDetailsCard job={job} />
+            <PerformanceMetrics job={job} />
+          </div>
+          
+          {/* Sidebar */}
+          <div className="space-y-6">
+            <QuickActions job={job} />
+            <CompressionStats job={job} />
+          </div>
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default ResultPage;
