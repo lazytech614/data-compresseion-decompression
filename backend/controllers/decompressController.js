@@ -62,7 +62,7 @@ export default async function handleDecompression(req, res) {
       case "lzw":
         result = lzwDecompress(compressedBuffer);
         break;
-      case "arithmetic-coding":
+      case "arithmetic":
         result = arithmeticCodingDecompress(compressedBuffer, metadata);
         break;
       default:

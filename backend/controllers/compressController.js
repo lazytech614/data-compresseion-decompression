@@ -43,7 +43,7 @@ export default async function handleCompression(req, res) {
       case "lzw":
         result = lzwCompress(inputBuffer);
         break;
-      case "arithmetic-coding":
+      case "arithmetic":
         result = arithmeticCodingCompress(inputBuffer);
         break;
       default:
