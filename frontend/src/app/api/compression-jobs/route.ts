@@ -656,7 +656,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('🔴 Error fetching compression jobs:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch compression jobs' },
+      { error: 'Failed to fetch compression jobs' , details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
