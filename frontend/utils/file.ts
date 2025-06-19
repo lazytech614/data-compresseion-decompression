@@ -1,0 +1,1 @@
+export const convertBase64ToBinary = () => {}
