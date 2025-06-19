@@ -8,41 +8,7 @@ import PerformanceMetrics from './_components/performance-matrics';
 import QuickActions from './_components/quick-actions';
 import CompressionStats from './_components/compression-stats';
 import { useRouter, useSearchParams } from 'next/navigation';
-
-interface InputFile {
-  id: string
-  filename: string
-  originalName: string
-  mimeType: string
-  size: string
-  path: string
-  url?: string
-  // ...other fields if needed
-}
-
-type OutputFile = InputFile;
-
-interface JobDetails {
-  id: string
-  status: string
-  type: string
-  quality?: number | null
-  algorithm?: string | null
-  originalSize: string
-  compressedSize?: string | null
-  compressionRatio?: number | null
-  startTime: string
-  endTime?: string | null
-  duration?: number | null
-  errorMessage?: string | null
-  batchId?: string | null
-  priority?: string
-  metadata?: any
-  compressedBase64?: string | null
-  decompressedBase64?: string | null
-  inputFiles: InputFile[]
-  outputFiles: OutputFile[]
-}
+import { JobDetails } from '@/types';
 
 // Loading component for Suspense fallback
 const ResultPageLoading = () => (

@@ -1,3 +1,5 @@
+import { FilePayload } from "@/types";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE as string; 
 
 //TODO: update the formdata type
@@ -26,15 +28,6 @@ export async function fetchAlgorithms() {
   const res = await fetch(`${API_BASE}/api/algorithms`);
   if (!res.ok) throw new Error('Failed to load algorithms');
   return res.json();
-}
-
-export interface FilePayload {
-  filename:     string;
-  originalName: string;
-  mimeType:     string;
-  size:         number;
-  path?:        string;
-  url?:         string;
 }
 
 export async function saveCompressionJob(jobData: {

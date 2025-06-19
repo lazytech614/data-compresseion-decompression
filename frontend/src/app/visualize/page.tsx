@@ -6,18 +6,7 @@ import PerformanceAnalyticsTab from './_components/performance-analytics';
 import AlgorithmComparisonTab from './_components/algorithm-comparison';
 import LearningResourcesTab from './_components/learning-resources';
 import AlgorithmDetailsTab from './_components/algorithm-details';
-
-// Define the shape of SystemStats coming from the API
-interface SystemStats {
-  date: string;
-  totalUsers: number;
-  totalCompressions: number;
-  totalDataProcessed: number;
-  avgCompressionRatio: number;
-  totalStorageUsed: number;
-  // category fields omitted for brevity
-  // algorithm fields omitted for brevity
-}
+import { SystemStats } from '@/types';
 
 const CompressVisualizePortal = () => {
   const [activeTab, setActiveTab] = useState('performance');

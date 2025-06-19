@@ -7,32 +7,7 @@ import RecentJobs            from "./_components/recent-jobs";
 import CompressionTypesChart from "./_components/compression-types-chart";
 import QuickActions           from "./_components/quick-actions";
 import { FILE_TYPE_COLORS } from "@/constants/pie-chart-colors";
-
-interface JobRecord {
-  id: string;
-  status: string;
-  type: string;
-  originalSize: number;
-  compressedSize?: number;
-  compressionRatio?: number;
-  startTime: string;
-  inputFiles: any[];
-  endTime?: string;
-  duration?: number;
-}
-
-interface UsagePoint {
-  date: string;
-  compressions: number;
-  dataProcessed: number;  // in MB
-}
-
-interface TypePoint {
-  name: string;
-  value: number;
-  // you can drop color here if your chart assigns it
-  color?: string;
-}
+import { JobRecord, TypePoint } from "@/types";
 
 export default function DashboardOverview() {
   const [jobs, setJobs]       = useState<JobRecord[]>([]);

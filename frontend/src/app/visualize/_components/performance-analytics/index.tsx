@@ -16,39 +16,7 @@ import {
     Cell 
 } from 'recharts';
 import { FileText, Zap, HardDrive } from 'lucide-react';
-
-// Shape of system stats passed in
-export interface SystemStats {
-  date: string;
-  totalDataProcessed: number;
-  totalCompressions: number;
-  avgCompressionRatio: number;
-  huffmanAvgRatio: number;
-  huffmanAvgDuration: number;
-  huffmanCount: number;
-  lz77AvgRatio: number;
-  lz77AvgDuration: number;
-  lz77Count: number;
-  lzwAvgRatio: number;
-  lzwAvgDuration: number;
-  lzwCount: number;
-  arithmeticAvgRatio: number;
-  arithmeticAvgDuration: number;
-  arithmeticCount: number;
-  documentAvgRatio: number;
-  documentCount: number;
-  textAvgRatio: number;
-  textCount: number;
-  photoAvgRatio: number;
-  photoCount: number;
-  videoAvgRatio: number;
-  videoCount: number;
-  audioAvgRatio: number;
-  audioCount: number;
-  unknownAvgRatio: number;
-  unknownCount: number;
-  // ... include any extra fields you need
-}
+import { SystemStats } from '@/types';
 
 interface PerformanceAnalyticsTabProps {
   stats: SystemStats[] | any;

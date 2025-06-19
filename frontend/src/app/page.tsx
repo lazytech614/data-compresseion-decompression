@@ -20,43 +20,11 @@ import {
   getCompressionJobs
 } from '../../utils/api';
 import { useAuth } from "@clerk/nextjs";
-
-interface ApiResult {
-  fileName: string;
-  stats: {
-    originalSize: number;
-    newSize: number;
-    compressionRatio: number;
-    timeMs: number;
-  };
-  compressedBase64?: string;
-  decompressedBase64?: string;
-  metadata?: any;
-  mode?: 'compress' | 'decompress';
-}
-
-interface CompressionJob {
-  id: string;
-  type: string;
-  status: string;
-  originalSize: string;
-  compressedSize?: string;
-  compressionRatio?: number;
-  metadata: any;
-  compressedBase64?: string;
-  decompressedBase64?: string;
-  duration?: number;
-  startTime: string;
-  endTime?: string;
-  inputFiles: any[];
-  mimeType: string;
-  outputFiles: any[];
-  algorithm: string;
-}
+import { ApiResult, CompressionJob } from "@/types";
 
 export default function CompressionPortal() {
   const router = useRouter();
-  const {isSignedIn, userId} = useAuth();
+  const {isSignedIn} = useAuth();
 
   const [file, setFile] = useState<File | null>(null);
   const [algorithms, setAlgorithms] = useState(ALGORITHMS);
