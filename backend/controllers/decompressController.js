@@ -9,6 +9,8 @@ import { performance } from "perf_hooks";
 import { decompress as huffmanDecompress } from "../algorithms/huffman.js";
 import { decompress as rleDecompress } from "../algorithms/rle.js";
 import { decompress as lz77Decompress } from "../algorithms/lz77.js";
+import { decompress as lzwDecompress } from "../algorithms/lzw.js";
+import { decompress as arithmeticCodingDecompress } from "../algorithms/arithmeticCoding.js";
 
 import { calculateStats } from "../utils/statsCalculator.js";
 
@@ -56,6 +58,12 @@ export default async function handleDecompression(req, res) {
         break;
       case "lz77":
         result = lz77Decompress(compressedBuffer);
+        break;
+      case "lzw":
+        result = lzwDecompress(compressedBuffer);
+        break;
+      case "arithmetic-coding":
+        result = arithmeticCodingDecompress(compressedBuffer, metadata);
         break;
       default:
         console.log("🔴 Unsupported algorithm");

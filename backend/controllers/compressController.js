@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 import { compress as huffmanCompress } from "../algorithms/huffman.js";
 import { compress as rleCompress } from "../algorithms/rle.js";
 import { compress as lz77Compress } from "../algorithms/lz77.js";
+import { compress as lzwCompress } from "../algorithms/lzw.js";
+import { compress as arithmeticCodingCompress } from "../algorithms/arithmeticCoding.js";
 
 import { calculateStats } from "../utils/statsCalculator.js";
 
@@ -37,6 +39,12 @@ export default async function handleCompression(req, res) {
         break;
       case "lz77":
         result = lz77Compress(inputBuffer);
+        break;
+      case "lzw":
+        result = lzwCompress(inputBuffer);
+        break;
+      case "arithmetic-coding":
+        result = arithmeticCodingCompress(inputBuffer);
         break;
       default:
         return res.status(400).json({ error: "Unsupported algorithm." });
