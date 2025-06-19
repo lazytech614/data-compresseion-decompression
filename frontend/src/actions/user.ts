@@ -2,19 +2,18 @@
 
 import { client } from "@/lib/prisma";
 import { currentUser } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
-import { startOfToday } from 'date-fns';
 
 const incrementUserCountInSystemStats = async () => {
-  const today = startOfToday();
+
+  const GLOBAL_STATS_ID = "global";
 
   await client.systemStats.upsert({
-    where: { date: today },
+    where: { id: GLOBAL_STATS_ID },
     update: {
       totalUsers: { increment: 1 }
     },
     create: {
-      date: today,
+      id: GLOBAL_STATS_ID,
       totalUsers: 1
     }
   });
