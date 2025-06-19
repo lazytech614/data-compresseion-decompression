@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { ArrowLeft, Share2 } from 'lucide-react';
 import StatusCard from './_components/status-card';
 import FileDetailsCard from './_components/file-details-card';
@@ -44,7 +44,15 @@ interface JobDetails {
   outputFiles: OutputFile[]
 }
 
-const ResultPage = () => {
+// Loading component for Suspense fallback
+const ResultPageLoading = () => (
+  <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center">
+    <p className="text-white">Loading...</p>
+  </div>
+);
+
+// Main component that uses useSearchParams
+const ResultPageContent = () => {
   const searchParams = useSearchParams()
   const router = useRouter()
   const jobId = searchParams.get('jobId')
@@ -138,6 +146,15 @@ const ResultPage = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+// Main exported component with Suspense wrapper
+const ResultPage = () => {
+  return (
+    <Suspense fallback={<ResultPageLoading />}>
+      <ResultPageContent />
+    </Suspense>
   );
 };
 
