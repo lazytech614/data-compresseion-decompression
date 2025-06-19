@@ -12,14 +12,11 @@ export async function postCompression(formData: any) {
 }
 
 export async function postDecompression(formData: any) {
-  console.log("⭐⭐ I am here in postDecompression");
-  console.log("Formdata", formData);
   const res = await fetch(`${API_BASE}/api/decompress`, {
     method: 'POST',
     body: formData
   });
   if (!res.ok) {
-    console.log("response not ok", res);
     throw new Error('Decompression API error');
   }
   return res.json();

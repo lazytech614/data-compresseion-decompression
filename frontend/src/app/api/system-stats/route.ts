@@ -1,4 +1,3 @@
-// src/app/api/system-stats/route.ts
 import { NextResponse } from 'next/server';
 import { client } from '@/lib/prisma';
 
@@ -65,10 +64,10 @@ export async function GET() {
 
     if (!stats) {
         console.log("🔴 Failed to fetch system stats");
-      return NextResponse.json(
-        { error: 'Failed to fetch system stats' },
-        { status: 400 }
-      );
+        return NextResponse.json(
+          { error: 'Failed to fetch system stats' },
+          { status: 400 }
+        );
     }
 
     return NextResponse.json(stats, { status: 200 });

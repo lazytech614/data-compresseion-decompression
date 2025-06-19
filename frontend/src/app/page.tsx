@@ -148,15 +148,8 @@ export default function CompressionPortal() {
     }
   }
 
-  // Debug: Check FormData contents
-  console.log("FormData entries:");
-  for (let [key, value] of formData.entries()) {
-    console.log(`${key}:`, value);
-  }
-
   setLoading(true);
   try {
-    console.log("Formdata from page", formData);
     const data: ApiResult =
       mode === 'compress'
         ? await postCompression(formData)
@@ -286,8 +279,6 @@ export default function CompressionPortal() {
       return selectedJobId && selectedAlgo;
     }
   };
-
-  console.log("Saved results", savedResults);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">

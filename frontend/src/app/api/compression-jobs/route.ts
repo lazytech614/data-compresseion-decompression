@@ -12,7 +12,7 @@ function sanitizeString(str: string | null | undefined): string | null {
   if (typeof str !== 'string') return String(str);
   
   // More aggressive null byte removal
-  let cleaned = str
+  const cleaned = str
     .replace(/\u0000/g, '') // Remove null bytes
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control characters
     .replace(/\uFFFD/g, '') // Remove replacement characters
@@ -339,10 +339,6 @@ export async function POST(request: NextRequest) {
     // Handle metadata separately to preserve its structure
     const sanitizedMetadata = rawMetadata ? sanitizeMetadata(rawMetadata) : null;
     
-    // console.log('Raw metadata:', JSON.stringify(rawMetadata, null, 2));
-    // console.log('Sanitized metadata:', JSON.stringify(sanitizedMetadata, null, 2));
-    // console.log('Sanitized data keys:', Object.keys(sanitizedData || {}));
-    
     // Validate that no null bytes remain in the sanitized data
     if (!validateNoNullBytes(sanitizedData, 'sanitizedData')) {
       console.error('Null bytes found in sanitized data!');
@@ -397,9 +393,6 @@ export async function POST(request: NextRequest) {
     const safeType = sanitizeString(type) || 'UNKNOWN';
     const safeAlgorithm = sanitizeString(algorithm) || 'UNKNOWN';
     const safeStatus = sanitizeString(status) || 'COMPLETED';
-    
-    // console.log('Sanitized values:', { safeType, safeAlgorithm, safeStatus });
-    // console.log('Final metadata to save:', JSON.stringify(sanitizedMetadata, null, 2));
 
     // 1. Create Job with sanitized data and preserved metadata
     const job = await client.compressionJob.create({
