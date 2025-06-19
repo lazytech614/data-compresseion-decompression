@@ -3,6 +3,8 @@ import {ClerkProvider} from '@clerk/nextjs'
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import GlobalHeader from "@/components/global/global-header";
+import { Toaster } from "@/components/ui/sonner";
+import ToasterWrapper from "@/components/global/toast-wrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,6 +34,7 @@ export default function RootLayout({
         >
           <GlobalHeader />
           {children}
+          <ToasterWrapper />
         </body>
       </html>
     </ClerkProvider>

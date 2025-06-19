@@ -1,5 +1,6 @@
 import { Copy, Download, FileText, AlertCircle } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const QuickActions = ({ job }: any) => {
   const [copied, setCopied] = useState(false);
@@ -26,7 +27,7 @@ const QuickActions = ({ job }: any) => {
       const base64Data = job.type === 'COMPRESS' ? job.compressedBase64 : job.decompressedBase64;
       
       if (!base64Data) {
-        alert('No file data available for download');
+        toast.error('No file data available for download');
         return;
       }
 
@@ -69,7 +70,7 @@ const QuickActions = ({ job }: any) => {
       
     } catch (error) {
       console.error('Download failed:', error);
-      alert('Failed to download file. Please try again.');
+      toast.error('Failed to download file. Please try again.');
     } finally {
       setDownloading(false);
     }

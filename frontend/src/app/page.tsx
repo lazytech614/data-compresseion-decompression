@@ -21,6 +21,7 @@ import { postCompression, postDecompression } from '../../utils/api';
 import { createFormData } from '../../utils/compression/fileProcessing';
 import { createJobData, createFailedJobData } from '../../utils/compression/jobHelpers';
 import { ApiResult } from "@/types";
+import { toast } from "sonner";
 
 export default function CompressionPortal() {
   const router = useRouter();
@@ -44,16 +45,17 @@ export default function CompressionPortal() {
 
   const handleSubmit = async () => {
     if (!isSignedIn) {
+      toast.error('You must be signed in to use this feature.');
       router.push('/auth/sign-in');
       return;
     }
 
     if (mode === 'compress' && (!file || !selectedAlgo)) {
-      return alert('Choose a file and algorithm.');
+      return toast.error('Choose a file and algorithm.');
     }
 
     if (mode === 'decompress' && (!selectedJobId || !selectedAlgo)) {
-      return alert('Choose a previously compressed file and algorithm.');
+      return toast.error('Choose a previously compressed file and algorithm.');
     }
 
     const selectedJob = mode === 'decompress' 
@@ -61,7 +63,7 @@ export default function CompressionPortal() {
       : null;
 
     if (mode === 'decompress' && !selectedJob) {
-      return alert('Selected file not found.');
+      return toast.error('Selected file not found.');
     }
 
     setProcessing(true);
@@ -79,11 +81,9 @@ export default function CompressionPortal() {
       const jobId = savedJob.jobId;
 
       router.push(`/result?jobId=${jobId}`);
-      
     } catch (err) {
       console.error(err);
-      alert('Error while processing. See console.');
-
+      toast.error('Error while processing. See console.');
       try {
         const failedJobData = createFailedJobData(
           mode, 

@@ -63,7 +63,6 @@ export async function GET() {
     }));
 
     if (!stats) {
-        console.log("🔴 Failed to fetch system stats");
         return NextResponse.json(
           { error: 'Failed to fetch system stats' },
           { status: 400 }
