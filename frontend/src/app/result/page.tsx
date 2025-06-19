@@ -20,7 +20,7 @@ interface InputFile {
   // ...other fields if needed
 }
 
-interface OutputFile extends InputFile {}
+type OutputFile = InputFile;
 
 interface JobDetails {
   id: string
