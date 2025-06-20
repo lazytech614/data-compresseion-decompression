@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { client } from '@/lib/prisma'; 
 import { currentUser } from '@clerk/nextjs/server'; 
 
-type AlgoKey = 'huffman' | 'lz77' | 'lzw' | 'arithmetic';
+type AlgoKey = 'huffman' | 'lz77' | 'lzw' | 'rle';
 
 // Helper function to sanitize strings and remove null bytes
 function sanitizeString(str: string | null | undefined): string | null {
@@ -565,7 +565,7 @@ export async function POST(request: NextRequest) {
 
     //c) algorithm‐wise
     const cleanAlgorithm = safeAlgorithm.toLowerCase();
-    const validAlgorithms: AlgoKey[] = ['huffman', 'lz77', 'lzw', 'arithmetic'];
+    const validAlgorithms: AlgoKey[] = ['huffman', 'lz77', 'lzw', 'rle'];
     const algorithmKey = validAlgorithms.includes(cleanAlgorithm as AlgoKey) 
       ? cleanAlgorithm as AlgoKey 
       : 'huffman'; // default fallback

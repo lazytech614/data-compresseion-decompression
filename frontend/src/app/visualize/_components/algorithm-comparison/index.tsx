@@ -58,13 +58,13 @@ const AlgorithmComparisonTab: React.FC<AlgorithmComparisonTabProps> = ({ stats }
           bestFor: 'Images, GIF files'
         },
         {
-          name: 'Arithmetic Coding',
-          algorithm: 'Arithmetic',
-          compressionRatio: latestStats.arithmeticAvgRatio || 0,
-          speed: latestStats.arithmeticAvgDuration ? Math.min(100, 1000 / latestStats.arithmeticAvgDuration) : 0,
+          name: 'Run-Length Encoding (RLE)',
+          algorithm: 'RLE',
+          compressionRatio: latestStats.rleAvgRatio || 0,
+          speed: latestStats.rleAvgDuration ? Math.min(100, 1000 / latestStats.rleAvgDuration) : 0,
           memoryUsage: Math.random() * 20 + 15, // Mock memory usage (15-35%)
           cpuUsage: Math.random() * 50 + 40, // Mock CPU usage (40-90%)
-          count: latestStats.arithmeticCount || 0,
+          count: latestStats.rleCount || 0,
           complexity: 'O(n)',
           bestFor: 'High compression ratio needs'
         }

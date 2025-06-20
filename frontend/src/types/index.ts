@@ -110,9 +110,9 @@ export interface SystemStats {
   lzwAvgRatio: number;
   lzwAvgDuration: number;
   lzwCount: number;
-  arithmeticAvgRatio: number;
-  arithmeticAvgDuration: number;
-  arithmeticCount: number;
+  rleAvgRatio: number;
+  rleAvgDuration: number;
+  rleCount: number;
   documentAvgRatio: number;
   documentCount: number;
   textAvgRatio: number;

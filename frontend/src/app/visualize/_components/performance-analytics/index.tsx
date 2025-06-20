@@ -30,6 +30,7 @@ const PerformanceAnalyticsTab: React.FC<PerformanceAnalyticsTabProps> = ({ stats
     if (stats && stats.length > 0) {
       // Get the latest stats
       const latestStats = stats[stats.length - 1];
+      console.log("Latest stats: ", latestStats);
       
       // Process algorithm data
       const algorithms = [
@@ -55,11 +56,11 @@ const PerformanceAnalyticsTab: React.FC<PerformanceAnalyticsTabProps> = ({ stats
           count: latestStats.lzwCount || 0
         },
         {
-          algorithm: 'Arithmetic',
-          compressionRatio: latestStats.arithmeticAvgRatio || 0,
-          speed: latestStats.arithmeticAvgDuration ? 1000 / latestStats.arithmeticAvgDuration : 0,
+          algorithm: 'RLE',
+          compressionRatio: latestStats.rleAvgRatio || 0,
+          speed: latestStats.rleAvgDuration ? 1000 / latestStats.rleAvgDuration : 0,
           cpuUsage: Math.random() * 80 + 20,
-          count: latestStats.arithmeticCount || 0
+          count: latestStats.rleCount || 0
         }
       ].filter(item => item.count > 0); // Only show algorithms that have been used
 
