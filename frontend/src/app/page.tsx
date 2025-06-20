@@ -83,7 +83,6 @@ export default function CompressionPortal() {
       router.push(`/result?jobId=${jobId}`);
     } catch (err) {
       console.error(err);
-      toast.error('Error while processing. See console.');
       try {
         const failedJobData = createFailedJobData(
           mode, 
