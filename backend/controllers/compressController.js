@@ -3,7 +3,7 @@ import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 
-import { compress as huffmanCompress } from "../algorithms/huffman.js";
+import { compress as huffmanCompress } from "../algorithms/huffman-compression/compression/compress.js";
 import { compress as rleCompress } from "../algorithms/rle.js";
 import { compress as lz77Compress } from "../algorithms/lz77.js";
 import { compress as lzwCompress } from "../algorithms/lzw.js";
@@ -124,6 +124,8 @@ export default async function handleCompression(req, res) {
     return res.json(response);
   } catch (err) {
     console.error("Compression error:", err);
+    const errorMessage =
+      err.message || err.toString() || "Unknown error occurred";
     try {
       await fetch(`${process.env.FRONTEND_URL}/api/compression-jobs`, {
         method: "POST",
@@ -143,6 +145,14 @@ export default async function handleCompression(req, res) {
       console.warn("Failed to save error to database:", dbError);
     }
 
-    return res.status(500).json({ error: "Server error during compression." });
+    return res.status(500).json({
+      error: errorMessage,
+      success: false,
+      details: {
+        algorithm: req.body.algorithm,
+        fileName: req.file?.originalname || "unknown",
+        timestamp: new Date().toISOString(),
+      },
+    });
   }
 }

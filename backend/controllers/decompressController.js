@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import { performance } from "perf_hooks";
 
-import { decompress as huffmanDecompress } from "../algorithms/huffman.js";
+import { decompress as huffmanDecompress } from "../algorithms/huffman-compression/compression/decompress.js";
 import { decompress as rleDecompress } from "../algorithms/rle.js";
 import { decompress as lz77Decompress } from "../algorithms/lz77.js";
 import { decompress as lzwDecompress } from "../algorithms/lzw.js";
