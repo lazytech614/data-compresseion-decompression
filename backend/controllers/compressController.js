@@ -29,6 +29,12 @@ export default async function handleCompression(req, res) {
     // Time measurement
     const start = performance.now();
 
+    // CPU usage measurment
+    const startCPU = process.cpuUsage();
+
+    //RAM usage
+    const startMem = process.memoryUsage();
+
     let result;
     switch (algorithm) {
       case "huffman":
@@ -52,6 +58,14 @@ export default async function handleCompression(req, res) {
 
     const end = performance.now();
     const timeTakenMs = end - start;
+
+    const deltaCPU = process.cpuUsage(startCPU);
+    const cpuSec = (deltaCPU.user + deltaCPU.system) / 1e6; // convert μs → s
+    const elapsedSec = timeTakenMs / 1000;
+    const cpuPercent = (cpuSec / elapsedSec) * 100;
+
+    const endMem = process.memoryUsage();
+    const memoryUsedBytes = endMem.heapUsed - startMem.heapUsed;
 
     // Write compressed file to disk (or you can skip writing and send as buffer)
     const compressedFilename = `${req.file.filename}_${algorithm}.bin`;
@@ -80,6 +94,8 @@ export default async function handleCompression(req, res) {
         newSize: compressedSize,
         compressionRatio: stats.compressionRatio,
         timeMs: timeTakenMs,
+        cpuPercent,
+        memoryUsedBytes,
       },
       metadata: result.metadata,
       algorithm,
@@ -105,6 +121,8 @@ export default async function handleCompression(req, res) {
             duration: timeTakenMs,
             compressedBase64,
             metadata: result.metadata,
+            cpuPercent,
+            memoryUsedBytes,
             status: "COMPLETED",
           }),
         }

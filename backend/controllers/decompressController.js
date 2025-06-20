@@ -1,5 +1,3 @@
-// decompress controller: handleDecompression.js
-
 import fs from "fs";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
@@ -46,6 +44,13 @@ export default async function handleDecompression(req, res) {
 
     // Perform decompression
     const start = performance.now();
+
+    // CPU usage measurment
+    const startCPU = process.cpuUsage();
+
+    //RAM usage
+    const startMem = process.memoryUsage();
+
     let result;
     switch (algorithm) {
       case "huffman":
@@ -69,6 +74,14 @@ export default async function handleDecompression(req, res) {
     }
     const end = performance.now();
     const timeTakenMs = end - start;
+
+    const deltaCPU = process.cpuUsage(startCPU);
+    const cpuSec = (deltaCPU.user + deltaCPU.system) / 1e6; // convert μs → s
+    const elapsedSec = timeTakenMs / 1000;
+    const cpuPercent = (cpuSec / elapsedSec) * 100;
+
+    const endMem = process.memoryUsage();
+    const memoryUsedBytes = endMem.heapUsed - startMem.heapUsed;
 
     const decompressedBuffer = result.decompressedBuffer;
     const decompressedSize = decompressedBuffer.length;
@@ -107,6 +120,8 @@ export default async function handleDecompression(req, res) {
         newSize: decompressedSize,
         compressionRatio: stats.compressionRatio,
         timeMs: timeTakenMs,
+        cpuPercent,
+        memoryUsedBytes,
       },
       metadataUsed: metadata, // echo back the metadata used for decompression
       algorithm,
