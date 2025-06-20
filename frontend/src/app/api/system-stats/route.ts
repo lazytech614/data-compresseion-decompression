@@ -57,9 +57,9 @@ export async function GET() {
       lzwAvgRatio: s.lzwAvgRatio,
       lzwAvgDuration: s.lzwAvgDuration,
 
-      arithmeticCount: s.arithmeticCount,
-      arithmeticAvgRatio: s.arithmeticAvgRatio,
-      arithmeticAvgDuration: s.arithmeticAvgDuration,
+      rleCount: s.rleCount,
+      rleAvgRatio: s.rleAvgRatio,
+      rleAvgDuration: s.rleAvgDuration,
     }));
 
     if (!stats) {
