@@ -10,7 +10,7 @@ import { FILE_TYPE_COLORS } from "@/constants/pie-chart-colors";
 import { JobRecord, TypePoint } from "@/types";
 
 export default function DashboardOverview() {
-  const [jobs, setJobs]       = useState<JobRecord[]>([]);
+  const [jobs, setJobs] = useState<JobRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   // 1) Fetch user & jobs
@@ -97,6 +97,8 @@ export default function DashboardOverview() {
     return <div className="p-8 text-white">Loading your dashboard…</div>;
   }
 
+  console.log("jobs", jobs);
+  console.log("usageData", usageData);
   return (
     <div className="min-h-screen bg-slate-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

@@ -6,12 +6,6 @@ const StatusCard = ({ job }: any) => {
   const inputFile = job.inputFiles[0];
   const outputFile = job.outputFiles[0];
 
-  const formatFileSize = (bytes : any) => {
-    if (!bytes) return NaN;
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return `${(bytes / Math.pow(1024, i)).toFixed(1)}`;
-  };
-
   const spaceSaved = (originalSize: any, compressedSize: any) => {
     const percentage = ((originalSize - compressedSize) / originalSize) * 100;
     return `${percentage.toFixed(2)}`;
@@ -49,7 +43,7 @@ const StatusCard = ({ job }: any) => {
         {isSuccess && (
           <div className="text-right">
             <p className="text-3xl font-bold text-green-400">
-              {spaceSaved(formatFileSize(inputFile.size), formatFileSize(outputFile.size))}%
+              {spaceSaved(inputFile.size, outputFile.size)}%
             </p>
             <p className="text-sm text-slate-400">space saved</p>
           </div>

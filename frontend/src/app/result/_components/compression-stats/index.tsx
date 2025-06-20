@@ -1,11 +1,4 @@
 const CompressionStats = ({ job }: any) => {
-  const formatFileSize = (bytes : any) => {
-    if (!bytes) return 'N/A';
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
-  };
-
   return (
     <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
       <h3 className="text-lg font-semibold text-white mb-4">Job Information</h3>

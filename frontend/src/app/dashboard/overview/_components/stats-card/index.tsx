@@ -1,14 +1,8 @@
 import { Activity, CheckCircle, HardDrive, TrendingUp } from "lucide-react";
 
-const StatsCards = ({ jobs }: any) => {
+const StatsCards = ({ jobs, usageData }: any) => {
   const totalJobs = jobs.length;
   const completedJobs = jobs.filter((job: any) => job.status === 'COMPLETED').length;
-  const totalSaved = jobs.reduce((acc: any, job: any) => {
-    if (job.compressedSize && job.originalSize) {
-      return acc + (Number(job.originalSize) - Number(job.compressedSize));
-    }
-    return acc;
-  }, 0);
   const avgCompressionRatio = jobs
     .filter((job: any) => job.compressionRatio)
     .reduce((acc: any, job: any, _: any, arr: any) => acc + job.compressionRatio / arr.length, 0);
@@ -20,8 +14,8 @@ const StatsCards = ({ jobs }: any) => {
       icon: Activity,
     },
     {
-      title: 'Space Saved',
-      value: `${(totalSaved / (1024 * 1024)).toFixed(1)} MB`,
+      title: 'Data Processed',
+      value: `${usageData[0].dataProcessed} MB`,
       icon: HardDrive,
     },
     {

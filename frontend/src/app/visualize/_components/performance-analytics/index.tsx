@@ -120,11 +120,6 @@ const PerformanceAnalyticsTab: React.FC<PerformanceAnalyticsTabProps> = ({ stats
           color: '#6B7280'
         }
       ].filter(item => item.count > 0);
-
-      const totalValue = fileTypes.reduce((total, fileType) => total + fileType.value, 0);
-      fileTypes.forEach(fileType => {
-        fileType.value = Math.round((fileType.value / totalValue) * 100);
-      })
     
       setFileTypeData(fileTypes);
     }

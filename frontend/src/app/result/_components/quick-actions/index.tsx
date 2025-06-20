@@ -135,12 +135,12 @@ const QuickActions = ({ job }: any) => {
           {job.compressionRatio && (
             <div className="flex justify-between">
               <span>Compression Ratio:</span>
-              <span className="text-green-400">{(job.compressionRatio * 100).toFixed(1)}%</span>
+              <span className="text-green-400">{(job.compressionRatio).toFixed(1)}</span>
             </div>
           )}
           <div className="flex justify-between">
             <span>Duration:</span>
-            <span>{job.duration}ms</span>
+            <span>{job.duration} ms</span>
           </div>
         </div>
       </div>
