@@ -16,33 +16,6 @@ export function buildFrequencyTable(input) {
   return freq;
 }
 
-function buildFrequencyTableStreamingWithProgress(
-  inputBuffer,
-  chunkSize,
-  progressCallback
-) {
-  const freqTable = new Map();
-  let processedBytes = 0;
-
-  for (let i = 0; i < inputBuffer.length; i += chunkSize) {
-    const chunk = inputBuffer.subarray(i, i + chunkSize);
-
-    for (const byte of chunk) {
-      freqTable.set(byte, (freqTable.get(byte) || 0) + 1);
-    }
-
-    processedBytes += chunk.length;
-
-    // Progress callback for frequency analysis phase (0-50%)
-    if (progressCallback) {
-      const progress = (processedBytes / inputBuffer.length) * 50;
-      progressCallback(Math.round(progress), "Analyzing frequency");
-    }
-  }
-
-  return freqTable;
-}
-
 // 2. Build Huffman tree from freqTable
 export function buildHuffmanTree(freqTable) {
   // create a leaf node for each character
@@ -91,19 +64,4 @@ export function invertCodes(codes) {
     inverted[bitStr] = ch;
   }
   return inverted;
-}
-
-// Streaming frequency table builder
-function buildFrequencyTableStreaming(inputBuffer, chunkSize = 64 * 1024) {
-  const freqTable = new Map();
-
-  for (let i = 0; i < inputBuffer.length; i += chunkSize) {
-    const chunk = inputBuffer.subarray(i, i + chunkSize);
-
-    for (const byte of chunk) {
-      freqTable.set(byte, (freqTable.get(byte) || 0) + 1);
-    }
-  }
-
-  return freqTable;
 }

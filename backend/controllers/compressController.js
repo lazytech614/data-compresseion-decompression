@@ -3,7 +3,7 @@ import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 
-import { compress as huffmanCompress } from "../algorithms/huffman-compression/compression/compress.js";
+import { compress as huffmanCompress } from "../algorithms/huffman.js";
 import { compress as rleCompress } from "../algorithms/rle.js";
 import { compress as lz77Compress } from "../algorithms/lz77.js";
 import { compress as lzwCompress } from "../algorithms/lzw.js";

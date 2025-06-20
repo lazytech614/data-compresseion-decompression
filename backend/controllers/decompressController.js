@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import { performance } from "perf_hooks";
 
-import { decompress as huffmanDecompress } from "../algorithms/huffman-compression/compression/decompress.js";
+import { decompress as huffmanDecompress } from "../algorithms/huffman.js";
 import { decompress as rleDecompress } from "../algorithms/rle.js";
 import { decompress as lz77Decompress } from "../algorithms/lz77.js";
 import { decompress as lzwDecompress } from "../algorithms/lzw.js";
@@ -27,8 +27,6 @@ export default async function handleDecompression(req, res) {
     }
 
     const algorithm = req.body.algorithm;
-    // For Huffman, we also need metadata (freq table). Suppose client sends metadata in body:
-    // It may come as JSON string or object:
     let metadata = {};
     if (req.body.metadata) {
       try {
@@ -72,11 +70,9 @@ export default async function handleDecompression(req, res) {
     const end = performance.now();
     const timeTakenMs = end - start;
 
-    // result should contain decompressedBuffer; adjust if your decompress returns differently
     const decompressedBuffer = result.decompressedBuffer;
     const decompressedSize = decompressedBuffer.length;
 
-    // Write decompressed file to disk (optional; you may stream instead)
     const originalFilename =
       req.file.originalname || req.file.filename || "file";
     const safeBaseName = path.parse(originalFilename).name.replace(/\W+/g, "_");
@@ -88,29 +84,21 @@ export default async function handleDecompression(req, res) {
     );
     fs.writeFileSync(decompressedPath, decompressedBuffer);
 
-    // Compute stats.
-    // Note: calculateStats(originalSize, newSize, timeMs, true) in your code for decompress:
-    // Your calculateStats signature: (decompressedSize, compressedSize, timeTakenMs, true)
-    // Let's call:
     const stats = calculateStats(
       decompressedSize,
       compressedSize,
       timeTakenMs,
       true
     );
-    // Assume stats.compressionRatio is meaningful (e.g., decompressedSize / compressedSize).
 
-    // Convert decompressed to base64 if you need to return it:
     const decompressedBase64 = decompressedBuffer.toString("base64");
 
-    // Clean up compressed file if desired
     try {
       fs.unlinkSync(req.file.path);
     } catch (e) {
       console.warn("Failed to delete temp compressed file:", e);
     }
 
-    // Prepare response to client
     const responsePayload = {
       fileName: decompressedFilename,
       decompressedBase64,
@@ -125,7 +113,6 @@ export default async function handleDecompression(req, res) {
       success: true,
     };
 
-    // Asynchronously save job to DB via your frontend API
     (async () => {
       // Build the DB record payload. Adjust field names to what your API expects.
       const jobRecord = {
@@ -167,12 +154,10 @@ export default async function handleDecompression(req, res) {
       }
     })();
 
-    // Finally, send response to client
     return res.json(responsePayload);
   } catch (err) {
     console.error("🔴🔴 Internal server error in decompression:", err);
 
-    // Optionally: try to record a FAILED decompression job
     try {
       const algorithm = req.body.algorithm;
       const metadata = req.body.metadata ? JSON.parse(req.body.metadata) : {};
