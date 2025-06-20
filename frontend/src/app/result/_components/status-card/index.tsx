@@ -3,6 +3,19 @@ import { AlertCircle, CheckCircle, XCircle } from "lucide-react";
 const StatusCard = ({ job }: any) => {
   const isSuccess = job.status === 'COMPLETED';
   const isFailed = job.status === 'FAILED';
+  const inputFile = job.inputFiles[0];
+  const outputFile = job.outputFiles[0];
+
+  const formatFileSize = (bytes : any) => {
+    if (!bytes) return NaN;
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return `${(bytes / Math.pow(1024, i)).toFixed(1)}`;
+  };
+
+  const spaceSaved = (originalSize: any, compressedSize: any) => {
+    const percentage = ((originalSize - compressedSize) / originalSize) * 100;
+    return `${percentage.toFixed(2)}`;
+  }
   
   return (
     <div className={`bg-slate-800 rounded-xl p-6 border-2 ${
@@ -36,7 +49,7 @@ const StatusCard = ({ job }: any) => {
         {isSuccess && (
           <div className="text-right">
             <p className="text-3xl font-bold text-green-400">
-              {(job.compressionRatio * 100).toFixed(1)}%
+              {spaceSaved(formatFileSize(inputFile.size), formatFileSize(outputFile.size))}%
             </p>
             <p className="text-sm text-slate-400">space saved</p>
           </div>

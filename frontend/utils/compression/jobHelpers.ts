@@ -18,6 +18,8 @@ export const createJobData = (
     compressedBase64: data.compressedBase64,
     decompressedBase64: data.decompressedBase64,
     metadata: data.metadata,
+    cpuPercent: data.stats.cpuPercent,
+    memoryUsage: data.stats.memoryUsedBytes,
     status: 'COMPLETED'
   };
 

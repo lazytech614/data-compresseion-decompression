@@ -55,6 +55,12 @@ model CompressionJob {
   metadata    Json?
   compressedBase64      String?
   decompressedBase64    String?
+  cpuPercent          Float?
+  memoryUsage         Float?
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   
   // Relations
   user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -148,9 +154,22 @@ model SystemStats {
   lzwAvgRatio          Float    @default(0)
   lzwAvgDuration       Float    @default(0)
 
-  arithmeticCount      Int      @default(0)
-  arithmeticAvgRatio   Float    @default(0)
-  arithmeticAvgDuration Float   @default(0)
+  rleCount      Int      @default(0)
+  rleAvgRatio   Float    @default(0)
+  rleAvgDuration Float   @default(0)
+
+  // Processing stats
+  huffmanAvgCpuPercent          Float    @default(0)
+  huffmanAvgMemoryUsage           Float   @default(0)
+
+  lz77AvgCpuPercent          Float    @default(0)
+  lz77AvgMemoryUsage           Float   @default(0)
+
+  lzwAvgCpuPercent            Float    @default(0)
+  lzwAvgMemoryUsage             Float   @default(0)
+
+  rleAvgCpuPercent      Float    @default(0)
+  rleAvgMemoryUsage       Float   @default(0)
 
   @@map("system_stats")
 }

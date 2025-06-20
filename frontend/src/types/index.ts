@@ -5,6 +5,8 @@ export interface ApiResult {
     newSize: number;
     compressionRatio: number;
     timeMs: number;
+    cpuPercent: number;
+    memoryUsedBytes: number;
   };
   compressedBase64?: string;
   decompressedBase64?: string;

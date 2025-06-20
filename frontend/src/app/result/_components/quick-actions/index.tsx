@@ -119,11 +119,6 @@ const QuickActions = ({ job }: any) => {
           <Copy className="h-4 w-4" />
           <span>{copied ? 'Copied!' : 'Copy Job ID'}</span>
         </button>
-        
-        <button className="w-full flex items-center justify-center space-x-2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg transition-colors">
-          <FileText className="h-4 w-4" />
-          <span>View Full Report</span>
-        </button>
       </div>
 
       {/* Additional Info */}

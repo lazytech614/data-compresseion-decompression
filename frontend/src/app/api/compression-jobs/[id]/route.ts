@@ -40,6 +40,8 @@ export async function GET(
       metadata: job.metadata ?? null,
       compressedBase64: job.compressedBase64 ?? null,
       decompressedBase64: job.decompressedBase64 ?? null,
+      cpuPercent: job.cpuPercent,
+      memoryUsage: job.memoryUsage,
       
       inputFiles: job.inputFiles.map(f => ({
         id: f.id,

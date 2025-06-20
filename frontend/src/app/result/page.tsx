@@ -50,6 +50,8 @@ const ResultPageContent = () => {
     })()
   }, [jobId, router])
 
+  console.log("Job: ", job);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">

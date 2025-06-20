@@ -82,6 +82,8 @@ export async function saveCompressionJob(jobData: {
   mimeType: string;
   status: string;
   errorMessage?: string;
+  cpuPercent?: number;
+  memoryUsage?: number;
   inputFiles: FilePayload[];
   outputFiles: FilePayload[];
 }) {

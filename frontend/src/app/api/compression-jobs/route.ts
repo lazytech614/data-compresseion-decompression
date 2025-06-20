@@ -160,10 +160,14 @@ async function updateGlobalStats({
   bytesProcessed,
   compressionRatio,
   storageUsed,
+  cpuPercent,
+  memoryUsage
 }: {
   bytesProcessed: number;
   compressionRatio: number;
   storageUsed?: number;
+  cpuPercent?: number;
+  memoryUsage?: number
 }) {
   const GLOBAL_STATS_ID = "global";
 
@@ -253,17 +257,26 @@ async function updateAlgorithmStats({
   algorithm,
   ratio,
   duration,
+  cpuPercent = 0,
+  memoryUsage = 0,
 }: {
   algorithm: AlgoKey;
   ratio: number;
   duration: number;
+  cpuPercent?: number;
+  memoryUsage?: number;
 }) {
   const GLOBAL_STATS_ID = "global";
   const countField = `${algorithm}Count` as keyof typeof client.systemStats;
   const ratioField = `${algorithm}AvgRatio` as keyof typeof client.systemStats;
   const durField = `${algorithm}AvgDuration` as keyof typeof client.systemStats;
+  const cpuField = `${algorithm}AvgCpuPercent` as keyof typeof client.systemStats;
+  const memField = `${algorithm}AvgMemoryUsage` as keyof typeof client.systemStats;
 
-  const existing = await client.systemStats.findUnique({ where: { id: GLOBAL_STATS_ID } });
+  const existing = await client.systemStats.findUnique({
+    where: { id: GLOBAL_STATS_ID },
+  });
+
   if (!existing) {
     return client.systemStats.create({
       data: {
@@ -276,16 +289,23 @@ async function updateAlgorithmStats({
         [countField]: 1,
         [ratioField]: ratio,
         [durField]: duration,
+        [cpuField]: cpuPercent,
+        [memField]: memoryUsage,
       } as any,
     });
   }
 
-  const prevCount = (existing as any)[countField] || 0;
-  const prevAvgRatio = (existing as any)[ratioField] || 0;
-  const prevAvgDur = (existing as any)[durField] || 0;
+  const prevCount = (existing as any)[countField] ?? 0;
+  const prevAvgRatio = (existing as any)[ratioField] ?? 0;
+  const prevAvgDur = (existing as any)[durField] ?? 0;
+  const prevAvgCpu = (existing as any)[cpuField] ?? 0;
+  const prevAvgMem = (existing as any)[memField] ?? 0;
+
   const newCount = prevCount + 1;
-  const newAvgRatio = ((prevAvgRatio * prevCount) + ratio) / newCount;
-  const newAvgDuration = ((prevAvgDur * prevCount) + duration) / newCount;
+  const newAvgRatio = (prevAvgRatio * prevCount + ratio) / newCount;
+  const newAvgDuration = (prevAvgDur * prevCount + duration) / newCount;
+  const newAvgCpu = (prevAvgCpu * prevCount + cpuPercent) / newCount;
+  const newAvgMem = (prevAvgMem * prevCount + memoryUsage) / newCount;
 
   return client.systemStats.update({
     where: { id: GLOBAL_STATS_ID },
@@ -293,6 +313,8 @@ async function updateAlgorithmStats({
       [countField]: { increment: 1 },
       [ratioField]: newAvgRatio,
       [durField]: newAvgDuration,
+      [cpuField]: newAvgCpu,
+      [memField]: newAvgMem,
     } as any,
   });
 }
@@ -370,6 +392,8 @@ export async function POST(request: NextRequest) {
       status = 'COMPLETED',
       inputFiles = [],
       outputFiles = [],
+      cpuPercent,
+      memoryUsage
     } = sanitizedData || {};
 
     // Additional validation for critical fields
@@ -409,6 +433,8 @@ export async function POST(request: NextRequest) {
         endTime: new Date(),
         algorithm: algorithm.toUpperCase(), // Use sanitized values
         metadata: sanitizedMetadata, // Use the specially handled metadata
+        cpuPercent,
+        memoryUsage
       },
     });
 
@@ -548,6 +574,8 @@ export async function POST(request: NextRequest) {
       algorithm: algorithmKey,
       ratio: validCompressionRatio,
       duration: validDuration,
+      cpuPercent: cpuPercent,
+      memoryUsage: memoryUsage
     });
 
     return NextResponse.json({
@@ -615,6 +643,8 @@ export async function GET(request: NextRequest) {
       metadata:         job.metadata ?? null,
       compressedBase64: job.compressedBase64 ?? null,     
       decompressedBase64: job.decompressedBase64 ?? null, 
+      cpuPercent: job.cpuPercent,
+      memoryUsage: job.memoryUsage,
 
       inputFiles:  job.inputFiles.map((f: any) => ({
         id:           f.id,
