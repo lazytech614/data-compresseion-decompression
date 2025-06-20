@@ -1,4 +1,5 @@
 import fs from "fs";
+import os from "os";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
@@ -62,7 +63,8 @@ export default async function handleCompression(req, res) {
     const deltaCPU = process.cpuUsage(startCPU);
     const cpuSec = (deltaCPU.user + deltaCPU.system) / 1e6; // convert μs → s
     const elapsedSec = timeTakenMs / 1000;
-    const cpuPercent = (cpuSec / elapsedSec) * 100;
+    const numCores = os.cpus().length;
+    const cpuPercent = ((cpuSec / elapsedSec) * 100) / numCores;
 
     const endMem = process.memoryUsage();
     const memoryUsedBytes = endMem.heapUsed - startMem.heapUsed;

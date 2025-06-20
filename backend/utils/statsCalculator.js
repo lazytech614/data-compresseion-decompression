@@ -4,13 +4,12 @@ export function calculateStats(
   timeMs,
   reversed = false
 ) {
-  // reversed = true for decompression (newSize = compressed size; originalSize = decompressed size)
   const ratio = reversed
-    ? (originalSize / newSize).toFixed(3) // compressed/original
-    : (newSize / originalSize).toFixed(3); // compressed/original
+    ? (newSize / originalSize).toFixed(3)
+    : (originalSize / newSize).toFixed(3);
   return {
-    originalSize, // bytes
-    newSize, // bytes
+    originalSize,
+    newSize,
     compressionRatio: parseFloat(ratio),
     timeMs: Math.round(timeMs),
   };
