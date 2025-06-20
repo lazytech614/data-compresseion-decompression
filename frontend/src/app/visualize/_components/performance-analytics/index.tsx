@@ -26,47 +26,62 @@ const PerformanceAnalyticsTab: React.FC<PerformanceAnalyticsTabProps> = ({ stats
   const [algorithmData, setAlgorithmData] = useState<any[]>([]);
   const [fileTypeData, setFileTypeData] = useState<any[]>([]);
 
+  const formatFileSize = (bytes : any) => {
+    if (!bytes) return NaN;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
+  };
+
   useEffect(() => {
     if (stats && stats.length > 0) {
-      // Get the latest stats
       const latestStats = stats[stats.length - 1];
-      console.log("Latest stats: ", latestStats);
       
-      // Process algorithm data
       const algorithms = [
         {
           algorithm: 'Huffman',
           compressionRatio: latestStats.huffmanAvgRatio || 0,
-          speed: latestStats.huffmanAvgDuration ? 1000 / latestStats.huffmanAvgDuration : 0, // Convert to operations per second
-          cpuUsage: Math.random() * 80 + 20, // Mock CPU usage since not in data
+          speed: latestStats.huffmanAvgDuration, 
+          memoryUsageRaw: latestStats.huffmanAvgMemoryUsage 
+            ? latestStats.huffmanAvgMemoryUsage / 1024 / 1024 
+            : 0,
+          memoryUsage: formatFileSize(latestStats.huffmanAvgMemoryUsage) || 0,
           count: latestStats.huffmanCount || 0
         },
         {
           algorithm: 'LZ77',
           compressionRatio: latestStats.lz77AvgRatio || 0,
-          speed: latestStats.lz77AvgDuration ? 1000 / latestStats.lz77AvgDuration : 0,
-          cpuUsage: Math.random() * 80 + 20,
+          speed: latestStats.lz77AvgDuration,
+          memoryUsageRaw: latestStats.lz77AvgMemoryUsage 
+            ? latestStats.lz77AvgMemoryUsage / 1024 / 1024 
+            : 0,
+          memoryUsage: formatFileSize(latestStats.lz77AvgMemoryUsage) || 0,
           count: latestStats.lz77Count || 0
         },
         {
           algorithm: 'LZW',
           compressionRatio: latestStats.lzwAvgRatio || 0,
-          speed: latestStats.lzwAvgDuration ? 1000 / latestStats.lzwAvgDuration : 0,
-          cpuUsage: Math.random() * 80 + 20,
+          speed: latestStats.lzwAvgDuration,
+          memoryUsageRaw: latestStats.lzwAvgMemoryUsage 
+            ? latestStats.lzwAvgMemoryUsage / 1024 / 1024 
+            : 0,
+          memoryUsage: formatFileSize(latestStats.lzwAvgMemoryUsage) || 0,
           count: latestStats.lzwCount || 0
         },
         {
           algorithm: 'RLE',
           compressionRatio: latestStats.rleAvgRatio || 0,
-          speed: latestStats.rleAvgDuration ? 1000 / latestStats.rleAvgDuration : 0,
-          cpuUsage: Math.random() * 80 + 20,
+          speed: latestStats.rleAvgDuration,
+          memoryUsageRaw: latestStats.rleAvgMemoryUsage 
+            ? latestStats.rleAvgMemoryUsage / 1024 / 1024 
+            : 0,
+          memoryUsage: formatFileSize(latestStats.rleAvgMemoryUsage) || 0,
           count: latestStats.rleCount || 0
         }
-      ].filter(item => item.count > 0); // Only show algorithms that have been used
+      ].filter(item => item.count > 0);
 
       setAlgorithmData(algorithms);
 
-      // Process file type data
       const fileTypes = [
         {
           name: 'Documents',
@@ -104,7 +119,7 @@ const PerformanceAnalyticsTab: React.FC<PerformanceAnalyticsTabProps> = ({ stats
           count: latestStats.unknownCount || 0,
           color: '#6B7280'
         }
-      ].filter(item => item.count > 0); // Only show file types that have been processed
+      ].filter(item => item.count > 0);
 
       const totalValue = fileTypes.reduce((total, fileType) => total + fileType.value, 0);
       fileTypes.forEach(fileType => {
@@ -154,28 +169,59 @@ const PerformanceAnalyticsTab: React.FC<PerformanceAnalyticsTabProps> = ({ stats
           )}
         </div>
 
-        {/* Speed vs CPU Usage */}
+        {/* Speed vs Memory Usage */}
         <div className="bg-slate-800/50 rounded-xl p-6 backdrop-blur-sm">
           <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <Zap className="text-yellow-400" size={24} />
-            Speed vs CPU Usage
+            Speed vs Memory Usage
           </h3>
           {algorithmData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={algorithmData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis dataKey="algorithm" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1F2937', 
+                <YAxis
+                  yAxisId="left"
+                  stroke="#10B981"
+                  tickFormatter={v => `${Math.round(v)} ms`} 
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  stroke="#F59E0B"
+                  tickFormatter={v => `${Math.round(v)} MB`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1F2937',
                     border: '1px solid #374151',
                     borderRadius: '8px',
                     color: '#fff'
-                  }} 
+                  }}
+                  formatter={(value, name) => {
+                    if (name === 'speed')       return [`${(value as number).toFixed(1)} ms`, 'Speed'];
+                    if (name === 'memoryUsageRaw') return [`${(value as number).toFixed(1)} MB`, 'Memory'];
+                    return [value, name];
+                  }}
                 />
-                <Line type="monotone" dataKey="speed" stroke="#10B981" strokeWidth={3} dot={{ fill: '#10B981', r: 6 }} />
-                <Line type="monotone" dataKey="cpuUsage" stroke="#F59E0B" strokeWidth={3} dot={{ fill: '#F59E0B', r: 6 }} />
+                <Line
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="speed"
+                  stroke="#10B981"
+                  strokeWidth={3}
+                  dot={{ r: 6, fill: '#10B981' }}
+                  name="speed"
+                />
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="memoryUsageRaw"
+                  stroke="#F59E0B"
+                  strokeWidth={3}
+                  dot={{ r: 6, fill: '#F59E0B' }}
+                  name="memoryUsageRaw"
+                />
               </LineChart>
             </ResponsiveContainer>
           ) : (
@@ -212,7 +258,6 @@ const PerformanceAnalyticsTab: React.FC<PerformanceAnalyticsTabProps> = ({ stats
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
-            
             <div className="flex flex-col justify-center space-y-4">
               {fileTypeData.map((item, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
@@ -221,7 +266,7 @@ const PerformanceAnalyticsTab: React.FC<PerformanceAnalyticsTabProps> = ({ stats
                     <span className="text-slate-200">{item.name}</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-white font-semibold">{item.value}%</span>
+                    <span className="text-white font-semibold">{item.value / 100}</span>
                     <div className="text-xs text-slate-400">compression ratio</div>
                   </div>
                 </div>

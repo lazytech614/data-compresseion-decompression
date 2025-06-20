@@ -17,20 +17,25 @@ interface AlgorithmComparisonTabProps {
 const AlgorithmComparisonTab: React.FC<AlgorithmComparisonTabProps> = ({ stats }) => {
   const [algorithmData, setAlgorithmData] = useState<any[]>([]);
 
+  const formatFileSize = (bytes : any) => {
+    if (!bytes) return NaN;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
+  };
+
   useEffect(() => {
     if (stats && stats.length > 0) {
-      // Get the latest stats
       const latestStats = stats[stats.length - 1];
       
-      // Process algorithm data from real stats
       const algorithms = [
         {
           name: 'Huffman Coding',
           algorithm: 'Huffman',
           compressionRatio: latestStats.huffmanAvgRatio || 0,
           speed: latestStats.huffmanAvgDuration ? Math.min(100, 1000 / latestStats.huffmanAvgDuration) : 0,
-          memoryUsage: Math.random() * 30 + 20, // Mock memory usage (20-50%)
-          cpuUsage: Math.random() * 40 + 30, // Mock CPU usage (30-70%)
+          memoryUsage: formatFileSize(latestStats.huffmanAvgMemoryUsage), 
+          cpuUsage: latestStats.huffmanAvgCpuPercent,
           count: latestStats.huffmanCount || 0,
           complexity: 'O(n log n)',
           bestFor: 'Text files, frequency-based data'
@@ -40,8 +45,8 @@ const AlgorithmComparisonTab: React.FC<AlgorithmComparisonTabProps> = ({ stats }
           algorithm: 'LZ77',
           compressionRatio: latestStats.lz77AvgRatio || 0,
           speed: latestStats.lz77AvgDuration ? Math.min(100, 1000 / latestStats.lz77AvgDuration) : 0,
-          memoryUsage: Math.random() * 25 + 25, // Mock memory usage (25-50%)
-          cpuUsage: Math.random() * 35 + 35, // Mock CPU usage (35-70%)
+          memoryUsage: formatFileSize(latestStats.lz77AvgMemoryUsage),
+          cpuUsage: latestStats.lz77AvgCpuPercent,
           count: latestStats.lz77Count || 0,
           complexity: 'O(n²)',
           bestFor: 'General purpose, sliding window'
@@ -51,8 +56,8 @@ const AlgorithmComparisonTab: React.FC<AlgorithmComparisonTabProps> = ({ stats }
           algorithm: 'LZW',
           compressionRatio: latestStats.lzwAvgRatio || 0,
           speed: latestStats.lzwAvgDuration ? Math.min(100, 1000 / latestStats.lzwAvgDuration) : 0,
-          memoryUsage: Math.random() * 30 + 30, // Mock memory usage (30-60%)
-          cpuUsage: Math.random() * 30 + 40, // Mock CPU usage (40-70%)
+          memoryUsage: formatFileSize(latestStats.lzwAvgMemoryUsage),
+          cpuUsage: latestStats.lzwAvgCpuPercent,
           count: latestStats.lzwCount || 0,
           complexity: 'O(n)',
           bestFor: 'Images, GIF files'
@@ -62,8 +67,8 @@ const AlgorithmComparisonTab: React.FC<AlgorithmComparisonTabProps> = ({ stats }
           algorithm: 'RLE',
           compressionRatio: latestStats.rleAvgRatio || 0,
           speed: latestStats.rleAvgDuration ? Math.min(100, 1000 / latestStats.rleAvgDuration) : 0,
-          memoryUsage: Math.random() * 20 + 15, // Mock memory usage (15-35%)
-          cpuUsage: Math.random() * 50 + 40, // Mock CPU usage (40-90%)
+          memoryUsage: formatFileSize(latestStats.rleAvgMemoryUsage),
+          cpuUsage: latestStats.rleAvgCpuPercent,
           count: latestStats.rleCount || 0,
           complexity: 'O(n)',
           bestFor: 'High compression ratio needs'
@@ -99,7 +104,7 @@ const AlgorithmComparisonTab: React.FC<AlgorithmComparisonTabProps> = ({ stats }
                     <div className="ml-2 w-16 bg-gray-700 rounded-full h-2">
                       <div 
                         className="bg-blue-500 h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(100, algo.compressionRatio * 100)}%` }}
+                        style={{ width: `${Math.min(100, algo.compressionRatio)}%` }}
                       />
                     </div>
                   </div>
@@ -117,7 +122,7 @@ const AlgorithmComparisonTab: React.FC<AlgorithmComparisonTabProps> = ({ stats }
                 </td>
                 <td className="p-3 text-center">
                   <div className="flex items-center justify-center">
-                    {algo.memoryUsage.toFixed(1)}%
+                    {algo.memoryUsage}
                     <div className="ml-2 w-16 bg-gray-700 rounded-full h-2">
                       <div 
                         className="bg-yellow-500 h-2 rounded-full transition-all duration-500"

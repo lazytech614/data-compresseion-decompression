@@ -48,18 +48,26 @@ export async function GET() {
       huffmanCount: s.huffmanCount,
       huffmanAvgRatio: s.huffmanAvgRatio,
       huffmanAvgDuration: s.huffmanAvgDuration,
+      huffmanAvgCpuPercent: s.huffmanAvgCpuPercent,
+      huffmanAvgMemoryUsage: s.huffmanAvgMemoryUsage,
 
       lz77Count: s.lz77Count,
       lz77AvgRatio: s.lz77AvgRatio,
       lz77AvgDuration: s.lz77AvgDuration,
+      lz77AvgCpuPercent: s.lz77AvgCpuPercent,
+      lz77AvgMemoryUsage: s.lz77AvgMemoryUsage,
 
       lzwCount: s.lzwCount,
       lzwAvgRatio: s.lzwAvgRatio,
       lzwAvgDuration: s.lzwAvgDuration,
+      lzwAvgCpuPercent: s.lzwAvgCpuPercent,
+      lzwAvgMemoryUsage: s.lzwAvgMemoryUsage,
 
       rleCount: s.rleCount,
       rleAvgRatio: s.rleAvgRatio,
       rleAvgDuration: s.rleAvgDuration,
+      rleAvgCpuPercent: s.rleAvgCpuPercent,
+      rleAvgMemoryUsage: s.rleAvgMemoryUsage,
     }));
 
     if (!stats) {

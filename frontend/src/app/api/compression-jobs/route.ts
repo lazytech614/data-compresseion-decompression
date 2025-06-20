@@ -4,7 +4,6 @@ import { currentUser } from '@clerk/nextjs/server';
 
 type AlgoKey = 'huffman' | 'lz77' | 'lzw' | 'rle';
 
-// Helper function to sanitize strings and remove null bytes
 function sanitizeString(str: string | null | undefined): string | null {
   if (!str) return null;
   if (typeof str !== 'string') return String(str);
@@ -23,7 +22,6 @@ function sanitizeString(str: string | null | undefined): string | null {
   return cleaned.trim() || null;
 }
 
-// Helper function to sanitize objects recursively with thorough null byte removal
 function sanitizeObject(obj: any): any {
   if (obj === null || obj === undefined) return null;
   
@@ -71,7 +69,6 @@ function sanitizeObject(obj: any): any {
   return obj;
 }
 
-// More thorough metadata sanitization
 function sanitizeMetadata(metadata: any): any {
   if (!metadata || typeof metadata !== 'object') {
     // If it's a string, sanitize it
@@ -125,7 +122,6 @@ function sanitizeMetadata(metadata: any): any {
   return deepClean(metadata);
 }
 
-// Additional function to validate that no null bytes remain
 function validateNoNullBytes(obj: any, path: string = 'root'): boolean {
   if (obj === null || obj === undefined) return true;
   
@@ -160,14 +156,10 @@ async function updateGlobalStats({
   bytesProcessed,
   compressionRatio,
   storageUsed,
-  cpuPercent,
-  memoryUsage
 }: {
   bytesProcessed: number;
   compressionRatio: number;
   storageUsed?: number;
-  cpuPercent?: number;
-  memoryUsage?: number
 }) {
   const GLOBAL_STATS_ID = "global";
 
