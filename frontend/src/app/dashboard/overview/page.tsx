@@ -41,10 +41,12 @@ export default function DashboardOverview() {
     // Try parsing as-is first
     const date = new Date(input);
     if (!isNaN(date.getTime())) {
+      console.log("🟢🟢 Returning from here");
       return date.toISOString().split('T')[0];
     }
     
     // Then try your D/M/Y parsing
+    console.log("🟢🟢 Returning from here");
     return toISODateFromDMY(input);
   }
 
