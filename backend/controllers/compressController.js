@@ -171,7 +171,7 @@ export default async function handleCompression(req, res) {
       details: {
         algorithm: req.body.algorithm,
         fileName: req.file?.originalname || "unknown",
-        timestamp: new Date().toISOString(),
+        timestamp: new Date().toLocaleDateString(),
       },
     });
   }

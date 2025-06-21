@@ -83,8 +83,8 @@ export async function GET() {
       originalSize:     j.originalSize.toString(),
       compressedSize:   j.compressedSize?.toString() ?? null,
       compressionRatio: j.compressionRatio,
-      startTime:        j.startTime.toISOString(),
-      endTime:          j.endTime?.toISOString() ?? null,
+      startTime:        j.startTime.toLocaleDateString(),
+      endTime:          j.endTime?.toLocaleDateString() ?? null,
       duration:         j.duration,
       inputFiles: j.inputFiles.map(f => ({
         id:           f.id,

@@ -10,7 +10,7 @@ export async function GET() {
     // Convert BigInt fields to strings
     const stats = rawStats.map((s) => ({
       id: s.id,
-      date: s.date?.toISOString(),
+      date: s.date?.toLocaleDateString(),
 
       // Daily metrics
       totalUsers: s.totalUsers,

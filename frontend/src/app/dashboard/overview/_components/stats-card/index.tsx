@@ -7,15 +7,18 @@ const StatsCards = ({ jobs, usageData }: any) => {
     .filter((job: any) => job.compressionRatio)
     .reduce((acc: any, job: any, _: any, arr: any) => acc + job.compressionRatio / arr.length, 0);
 
+  const totalCompression = usageData.reduce((acc: any, job: any) => acc + job.compressions, 0);
+  const totalDataProcessed = usageData.reduce((acc: any, job: any) => acc + job.dataProcessed, 0);
+
   const stats = [
     {
       title: 'Total Compressions',
-      value: totalJobs.toString(),
+      value: totalCompression.toString(),
       icon: Activity,
     },
     {
       title: 'Data Processed',
-      value: `${usageData[0].dataProcessed} MB`,
+      value: `${totalDataProcessed} MB`,
       icon: HardDrive,
     },
     {

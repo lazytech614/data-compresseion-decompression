@@ -19,6 +19,7 @@ export default function DashboardOverview() {
       setLoading(true);
       try {
         const res = await fetch("/api/compression-jobs");
+        console.log("Response:", await res.json());
         const { jobs: fetchedJobs } = await res.json();
         setJobs(fetchedJobs);
       } catch (err) {
@@ -30,16 +31,52 @@ export default function DashboardOverview() {
   }, []);
 
   // 2) Derive usageData from jobs
-  function parseToISO(dateStr: string) {
-    const [day, month, year] = dateStr.split("/");
-    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  function toISODateFromDMY(input: string): string | null {
+    const parts = input.split('/');
+    if (parts.length !== 3) {
+      console.warn('Unexpected date format (not D/M/YYYY):', input);
+      return null;
+    }
+    let [d, m, y] = parts;
+    d = d.trim();
+    m = m.trim();
+    y = y.trim();
+
+    if (y.length === 2) {
+      console.warn('Two-digit year? Unexpected:', input);
+    }
+    const dayNum = parseInt(d, 10);
+    const monthNum = parseInt(m, 10);
+    const yearNum = parseInt(y, 10);
+    if (
+      isNaN(dayNum) ||
+      isNaN(monthNum) ||
+      isNaN(yearNum) ||
+      monthNum < 1 ||
+      monthNum > 12 ||
+      dayNum < 1 ||
+      dayNum > 31
+    ) {
+      console.warn('Invalid numeric date parts:', input);
+      return null;
+    }
+    const dd = String(dayNum).padStart(2, '0');
+    const mm = String(monthNum).padStart(2, '0');
+    const yyyy = String(yearNum).padStart(4, '0');
+
+    return `${yyyy}-${mm}-${dd}`;
   }
 
   const usageData = useMemo(() => {
     const bucket: Record<string, { date: string; compressions: number; bytesProcessed: number }> = {};
 
     jobs.forEach(j => {
-      const day = j.startTime.slice(0,10);
+      const raw = j.startTime;
+      const day = toISODateFromDMY(raw);
+      if (!day) {
+        // skip or handle invalid date
+        return;
+      }
       if (!bucket[day]) {
         bucket[day] = { date: day, compressions: 0, bytesProcessed: 0 };
       }
@@ -51,7 +88,7 @@ export default function DashboardOverview() {
     return Object.values(bucket)
       .sort((a,b) => a.date.localeCompare(b.date))
       .map(d => ({
-        date: parseToISO(d.date),
+        date: d.date,
         compressions:  d.compressions,
         // Convert bytes → MB so your chart works in reasonable units
         dataProcessed: +(d.bytesProcessed / (1024*1024)).toFixed(1),
