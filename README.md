@@ -15,7 +15,7 @@
 ## 📸 Screenshots
 
 ### Dashboard Overview
-![Dashboard](https://postimg.cc/cgBfBG1R)
+![Dashboard](./assets/dashboard_1.png)
 ![Dashboard](https://github.com/lazytech614/data-compresseion-decompression/tree/main/assets/dashboard_2.png)
 *Main dashboard showing compression statistics, file type distribution, and recent jobs*
 
