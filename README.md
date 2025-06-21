@@ -1713,10 +1713,10 @@ A: Absolutely! Follow our deployment guide for various hosting options.
 
 ### 📧 Contact
 
-- **Email**: [lazytech614@gmail.com](mailto:lazytech614@gmail.com)
+- **Email**: [derupanjan2021@gmail.com](mailto:derupanjan2021@gmail.com)
 - **GitHub**: [@lazytech614](https://github.com/lazytech614)
-- **LinkedIn**: [LazyTech614](https://linkedin.com/in/lazytech614)
-- **Twitter**: [@LazyTech614](https://twitter.com/LazyTech614)
+- **LinkedIn**: [Rupanjan](https://www.linkedin.com/in/rupanjan-de-15126527a/)
+- **Instagram**: [@whoisrupanjan](https://www.instagram.com/whoisrupanjan/?__pwa=1)
 
 ### 🌟 Show Your Support
 
