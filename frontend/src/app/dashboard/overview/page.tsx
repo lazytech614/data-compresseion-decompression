@@ -14,6 +14,7 @@ import { FILE_TYPE_COLORS } from "@/constants/pie-chart-colors";
 import { JobRecord, TypePoint } from "@/types";
 import Link from "next/link";
 import { ZapOff } from "lucide-react";
+import { parse } from "path";
 
 export default function DashboardOverview() {
   const [jobs, setJobs] = useState<JobRecord[]>([]);
@@ -33,6 +34,19 @@ export default function DashboardOverview() {
       }
     })();
   }, []);
+
+  function parseAnyDate(input: string): string | null {
+    if (!input) return null;
+    
+    // Try parsing as-is first
+    const date = new Date(input);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split('T')[0];
+    }
+    
+    // Then try your D/M/Y parsing
+    return toISODateFromDMY(input);
+  }
 
   function toISODateFromDMY(input: string): string | null {
     const parts = input.split('/');
@@ -75,7 +89,7 @@ export default function DashboardOverview() {
 
     jobs.forEach(j => {
       const raw = j.startTime;
-      const day = toISODateFromDMY(raw);
+      const day = parseAnyDate(raw);
       console.log(day);
       if (!day) {
         return;
