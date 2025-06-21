@@ -35,12 +35,6 @@ export default function DashboardOverview() {
     })();
   }, []);
 
-  // if(!jobs || jobs.length == 0) return (
-  //   <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-      
-  //   </div>
-  // )
-
   function toISODateFromDMY(input: string): string | null {
     const parts = input.split('/');
     if (parts.length !== 3) {
@@ -192,7 +186,10 @@ export default function DashboardOverview() {
         <ZapOff className="w-12 h-12" />
         <h2 className="text-xl font-semibold">No Data Found</h2>
         <p className="text-sm text-slate-400 max-w-sm">
-          You haven't run any compression tasks yet. <Link className="underline text-blue-500" href={'/'}>Upload a file or start a job to see analytics here.</Link>
+          You haven’t run any compression tasks yet.{' '}
+          <Link className="underline text-blue-500" href="/">
+            Upload a file or start a job to see analytics here.
+          </Link>
         </p>
       </div>
     );
