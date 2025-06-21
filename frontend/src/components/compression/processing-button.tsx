@@ -15,7 +15,7 @@ export default function ProcessingButton({
   onClick 
 }: ProcessingButtonProps) {
   return (
-    <Button
+    <button
       onClick={onClick}
       type="submit"
       disabled={loading || !isFormValid}
@@ -38,6 +38,6 @@ export default function ProcessingButton({
           </span>
         </>
       )}
-    </Button>
+    </button>
   );
 }
