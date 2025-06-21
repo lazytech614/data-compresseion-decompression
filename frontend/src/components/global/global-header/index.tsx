@@ -1,6 +1,7 @@
 "use client"
 
 import { NAV_LINKS } from '@/constants/nav-links'
+import Image from 'next/image'
 import Link from 'next/link'
 import React, { useState } from 'react'
 import {
@@ -11,6 +12,7 @@ import {
 import { Zap, Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { usePathname } from 'next/navigation'
+import compressflow_logo from '../../../../public/compressflow_logo.svg'
 
 export default function GlobalHeader() {
   const pathname = usePathname();
