@@ -10,7 +10,6 @@ import CompressionEfficiencyChart from "./_components/compression-efficiency-cha
 import ProcessingTimeAnalysis from "./_components/processing-time-analysis";
 import FileStorageOverview from "./_components/file-storage-overview";
 import PerformanceMetrics from "./_components/performance-matrics";
-import HeatmapActivity from "./_components/heatmap-activity";
 import { FILE_TYPE_COLORS } from "@/constants/pie-chart-colors";
 import { JobRecord, TypePoint } from "@/types";
 import Link from "next/link";
@@ -220,9 +219,6 @@ export default function DashboardOverview() {
           <div className="xl:col-span-5">
             <PerformanceMetrics jobs={jobs} />
           </div>
-          {/* <div className="xl:col-span-2">
-            <HeatmapActivity jobs={jobs} />
-          </div> */}
         </div>
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
           <div className="xl:col-span-3">
