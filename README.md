@@ -16,20 +16,20 @@
 
 ### Dashboard Overview
 ![Dashboard](./assets/dashboard_1.png)
-![Dashboard](https://github.com/lazytech614/data-compresseion-decompression/tree/main/assets/dashboard_2.png)
+![Dashboard](./assets/dashboard_2.png)
 *Main dashboard showing compression statistics, file type distribution, and recent jobs*
 
 ### Performance Analytics
-![Analytics](https://github.com/lazytech614/data-compresseion-decompression/tree/main/assets/analytics_1.png)
-![Analytics](https://github.com/lazytech614/data-compresseion-decompression/tree/main/assets/analytics_2.png)
+![Analytics](./assets/analytics_1.png)
+![Analytics](./assets/analytics_2.png)
 *Detailed performance analytics comparing different compression algorithms*
 
 ### Learning Resources
-![Learning Resources](https://github.com/lazytech614/data-compresseion-decompression/tree/main/assets/learning_resources.png)
+![Learning Resources](./assets/learning_resources.png)
 *Various learning resources to know more about diffrent algorithms*
 
 ### Algorithm Details
-![Algorithm Details](https://github.com/lazytech614/data-compresseion-decompression/tree/main/assets/algorithm_details.png)
+![Algorithm Details](./assets/algorithm_details.png)
 *Some key points about famous and widely used algorithms*
 
 ## ✨ Features
