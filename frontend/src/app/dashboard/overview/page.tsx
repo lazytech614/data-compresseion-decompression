@@ -19,7 +19,6 @@ export default function DashboardOverview() {
       setLoading(true);
       try {
         const res = await fetch("/api/compression-jobs");
-        console.log("Response:", await res.json());
         const { jobs: fetchedJobs } = await res.json();
         setJobs(fetchedJobs);
       } catch (err) {
