@@ -622,6 +622,7 @@ export async function GET(request: NextRequest) {
       id:               job.id,
       status:           job.status,
       type:             job.type,
+      algorithm:        job.algorithm,
       quality:          job.quality,
       originalSize:     job.originalSize.toString(),
       compressedSize:   job.compressedSize?.toString() ?? null,

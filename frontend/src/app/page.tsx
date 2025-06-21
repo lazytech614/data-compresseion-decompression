@@ -27,7 +27,7 @@ export default function CompressionPortal() {
   const router = useRouter();
   const { isSignedIn } = useAuth();
   
-  const { savedResults, saveJob } = useCompressionJobs();
+  const { savedResults, saveJob, loading } = useCompressionJobs();
   const {
     file,
     setFile,
@@ -131,6 +131,7 @@ export default function CompressionPortal() {
             {mode === 'decompress' && (
               <DecompressFileSelector
                 savedResults={savedResults}
+                loading={loading}
                 selectedJobId={selectedJobId}
                 onJobSelect={setSelectedJobId}
               />

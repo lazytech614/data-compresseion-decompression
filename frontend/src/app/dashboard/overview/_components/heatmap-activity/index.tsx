@@ -2,7 +2,6 @@
 import { Calendar, Activity } from 'lucide-react';
 
 const HeatmapActivity = ({ jobs }: any) => {
-  console.log("Jobs", jobs);
   const generateLast7Days = () => {
     const days = [];
     for (let i = 6; i >= 0; i--) {

@@ -88,7 +88,6 @@ export default function DashboardOverview() {
     jobs.forEach(j => {
       const raw = j.startTime;
       const day = parseAnyDate(raw);
-      console.log(day);
       if (!day) {
         return;
       }

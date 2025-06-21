@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getCompressionJobs, saveCompressionJob } from '../../utils/api';
 import { CompressionJob } from '@/types';
+import { set } from 'mongoose';
 
 export const useCompressionJobs = () => {
   const [savedResults, setSavedResults] = useState<CompressionJob[]>([]);
@@ -20,12 +21,15 @@ export const useCompressionJobs = () => {
 
   const saveJob = async (jobData: any) => {
     try {
+      setLoading(true);
       const savedJob = await saveCompressionJob(jobData);
       await loadCompressionJobs(); // Refresh the list
       return savedJob;
     } catch (error) {
       console.error('Failed to save job:', error);
       throw error;
+    }finally{
+      setLoading(false);
     }
   };
 
