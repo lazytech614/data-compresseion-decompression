@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { Copy, Download, FileText, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -85,7 +86,7 @@ const QuickActions = ({ job }: any) => {
       <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
       
       <div className="space-y-3">
-        <button 
+        <Button 
           onClick={downloadFile}
           disabled={!canDownload || downloading}
           className={`w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg transition-colors ${
@@ -103,7 +104,7 @@ const QuickActions = ({ job }: any) => {
                 : 'Download Decompressed File'
             }
           </span>
-        </button>
+        </Button>
 
         {!canDownload && job.status !== 'COMPLETED' && (
           <div className="flex items-center space-x-2 text-yellow-400 text-sm">
@@ -112,13 +113,13 @@ const QuickActions = ({ job }: any) => {
           </div>
         )}
         
-        <button 
+        <Button 
           onClick={copyJobId}
           className="w-full flex items-center justify-center space-x-2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg transition-colors"
         >
           <Copy className="h-4 w-4" />
           <span>{copied ? 'Copied!' : 'Copy Job ID'}</span>
-        </button>
+        </Button>
       </div>
 
       {/* Additional Info */}

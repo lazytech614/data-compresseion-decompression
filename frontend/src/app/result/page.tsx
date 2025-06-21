@@ -9,6 +9,7 @@ import QuickActions from './_components/quick-actions';
 import CompressionStats from './_components/compression-stats';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { JobDetails } from '@/types';
+import { Button } from '@/components/ui/button';
 
 const ResultPageLoading = () => (
   <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
@@ -65,12 +66,12 @@ const ResultPageContent = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4">
         <p className="text-red-400 mb-4">{error || 'Job not found'}</p>
-        <button
+        <Button
           onClick={() => router.push('/')}
           className="text-blue-400 underline"
         >
           Go back
-        </button>
+        </Button>
       </div>
     )
   }
@@ -80,18 +81,18 @@ const ResultPageContent = () => {
       <div className="bg-slate-800 border-b border-slate-700 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <button onClick={() => router.push('/')} className="flex items-center space-x-2 text-slate-400 hover:text-white transition-colors">
+            <Button onClick={() => router.push('/')} className="flex items-center space-x-2 text-slate-400 hover:text-white transition-colors">
               <ArrowLeft className="h-5 w-5" />
               <span>Back to Home</span>
-            </button>
+            </Button>
             <div className="h-6 w-px bg-slate-600" />
             <h1 className="text-xl font-semibold">{job.type === 'DECOMPRESS' ? 'Decompression' : 'Compression'} Result</h1>
           </div>
           <div className="flex items-center space-x-3">
-            <button className="flex items-center space-x-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">
+            <Button className="flex items-center space-x-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">
               <Share2 className="h-4 w-4" />
               <span>Share</span>
-            </button>
+            </Button>
           </div>
         </div>
       </div>

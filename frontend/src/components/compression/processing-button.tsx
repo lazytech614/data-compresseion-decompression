@@ -1,4 +1,5 @@
 import { Download, Upload } from "lucide-react";
+import { Button } from "../ui/button";
 
 interface ProcessingButtonProps {
   mode: 'compress' | 'decompress';
@@ -14,7 +15,7 @@ export default function ProcessingButton({
   onClick 
 }: ProcessingButtonProps) {
   return (
-    <button
+    <Button
       onClick={onClick}
       type="submit"
       disabled={loading || !isFormValid}
@@ -37,6 +38,6 @@ export default function ProcessingButton({
           </span>
         </>
       )}
-    </button>
+    </Button>
   );
 }

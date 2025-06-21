@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ExternalLink, Clock, Zap, FileText, Image, Music, Video, Search, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import { ALGORITHM_DETAILS } from '@/constants/algorithms';
 import { CATEGORIES } from '@/constants/algorithms';
+import { Button } from '@/components/ui/button';
 
 const AlgorithmDetailsTab = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -49,7 +50,7 @@ const AlgorithmDetailsTab = () => {
         </div>
         <div className="mb-8 space-y-4">
           <div className="relative max-w-md mx-auto">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 z-[10]" size={20} />
             <input
               type="text"
               placeholder="Search algorithms..."
@@ -60,7 +61,7 @@ const AlgorithmDetailsTab = () => {
           </div>
           <div className="flex flex-wrap justify-center gap-2">
             {CATEGORIES.map(category => (
-              <button
+              <Button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
                 className={`px-4 py-2 rounded-lg transition-all duration-200 font-medium ${
@@ -70,7 +71,7 @@ const AlgorithmDetailsTab = () => {
                 }`}
               >
                 {category !== 'All' && getCategoryIcon(category)} {category}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -78,7 +79,7 @@ const AlgorithmDetailsTab = () => {
           {filteredAlgorithms.map((algo, index) => (
             <div 
               key={index} 
-              className="group bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-slate-600/50 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-900/20 hover:scale-[1.02]"
+              className="group bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-slate-600/50 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-900/20"
             >
               <div className="p-6 border-b border-slate-700/50">
                 <div className="flex items-start justify-between mb-4">
@@ -98,12 +99,12 @@ const AlgorithmDetailsTab = () => {
                       </div>
                     </div>
                   </div>
-                  <button
+                  <Button
                     onClick={() => setExpandedCard(expandedCard === index ? null : index)}
                     className="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 hover:text-white transition-all"
                   >
                     {expandedCard === index ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                  </button>
+                  </Button>
                 </div>
                 <p className="text-slate-300 mb-4 leading-relaxed">{algo.description}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">

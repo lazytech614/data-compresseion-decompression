@@ -128,7 +128,6 @@ const PerformanceAnalyticsTab: React.FC<PerformanceAnalyticsTabProps> = ({ stats
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Compression Ratio Chart */}
         <div className="bg-slate-800/50 rounded-xl p-6 backdrop-blur-sm">
           <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <HardDrive className="text-blue-400" size={24} />
@@ -163,8 +162,6 @@ const PerformanceAnalyticsTab: React.FC<PerformanceAnalyticsTabProps> = ({ stats
             </div>
           )}
         </div>
-
-        {/* Speed vs Memory Usage */}
         <div className="bg-slate-800/50 rounded-xl p-6 backdrop-blur-sm">
           <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <Zap className="text-yellow-400" size={24} />
@@ -226,8 +223,6 @@ const PerformanceAnalyticsTab: React.FC<PerformanceAnalyticsTabProps> = ({ stats
           )}
         </div>
       </div>
-
-      {/* File Type Effectiveness */}
       <div className="bg-slate-800/50 rounded-xl p-6 backdrop-blur-sm">
         <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <FileText className="text-green-400" size={24} />

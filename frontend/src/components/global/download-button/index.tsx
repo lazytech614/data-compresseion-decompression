@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+
 //TODO: update the type
 export default function DownloadButton({ base64, fileName }: any) {
   const handleDownload = () => {
@@ -8,11 +10,11 @@ export default function DownloadButton({ base64, fileName }: any) {
   };
 
   return (
-    <button
+    <Button
       onClick={handleDownload}
       className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
     >
       Download {fileName}
-    </button>
+    </Button>
   );
 }

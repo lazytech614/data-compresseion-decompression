@@ -7,6 +7,7 @@ import AlgorithmComparisonTab from './_components/algorithm-comparison';
 import LearningResourcesTab from './_components/learning-resources';
 import AlgorithmDetailsTab from './_components/algorithm-details';
 import { SystemStats } from '@/types';
+import { Button } from '@/components/ui/button';
 
 const CompressVisualizePortal = () => {
   const [activeTab, setActiveTab] = useState('performance');
@@ -37,7 +38,7 @@ const CompressVisualizePortal = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="text-white mt-4 text-lg">Loading your result...</p>
+          <p className="text-white mt-4 text-lg">Wait a moment...</p>
         </div>
       </div>
     );
@@ -69,7 +70,7 @@ const CompressVisualizePortal = () => {
           ].map(tab => {
             const Icon = tab.icon;
             return (
-              <button
+              <Button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ${
@@ -80,7 +81,7 @@ const CompressVisualizePortal = () => {
               >
                 <Icon size={18} />
                 {tab.label}
-              </button>
+              </Button>
             );
           })}
         </div>

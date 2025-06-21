@@ -3,6 +3,7 @@ import { BookOpen, ExternalLink, Zap, Lightbulb, Play, Trophy, Brain, Sparkles, 
 import { EDUCATIONAL_RESOURCES } from '@/constants/educational-resources';
 import { DID_YOU_KNOW_FACTS } from '@/constants/educational-resources';
 import { INTERACTIVE_DEMOS } from '@/constants/educational-resources';
+import { Button } from '@/components/ui/button';
 
 const LearningResourcesTab = () => {
   const [currentFact, setCurrentFact] = useState(0);
@@ -46,9 +47,7 @@ const LearningResourcesTab = () => {
               </h2>
               <p className="text-slate-300 text-lg">From zero to compression hero with interactive learning</p>
             </div>
-          </div>
-          
-          {/* Progress Tracker */}
+          </div>          
           <div className="bg-slate-800/50 rounded-xl p-4 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-slate-300">Learning Progress</span>
@@ -58,7 +57,7 @@ const LearningResourcesTab = () => {
               <div 
                 className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-500"
                 style={{ width: `${getProgressPercentage()}%` }}
-              ></div>
+              />
             </div>
             <div className="flex items-center justify-between mt-2">
               <p className="text-xs text-slate-400">{completedResources.size} of {EDUCATIONAL_RESOURCES.length} resources completed</p>
@@ -97,7 +96,7 @@ const LearningResourcesTab = () => {
         
         <div className="flex justify-center mt-4 gap-2">
           {DID_YOU_KNOW_FACTS.map((_, index) => (
-            <button
+            <Button
               key={index}
               onClick={() => setCurrentFact(index)}
               className={`w-2 h-2 rounded-full transition-all ${
@@ -187,7 +186,7 @@ const LearningResourcesTab = () => {
                   }`}>
                     {resource.type}
                   </div>
-                  <button
+                  <Button
                     onClick={(e) => {
                       e.preventDefault();
                       toggleResourceCompletion(index);
@@ -205,7 +204,7 @@ const LearningResourcesTab = () => {
                         Click to complete!
                       </div>
                     )}
-                  </button>
+                  </Button>
                 </div>
               </div>
               

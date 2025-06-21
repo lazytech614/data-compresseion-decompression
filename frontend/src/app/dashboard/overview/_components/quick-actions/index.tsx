@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { Activity, Download, FileText, Zap } from "lucide-react";
 
 const QuickActions = () => {
@@ -13,13 +14,13 @@ const QuickActions = () => {
       <h3 className="text-lg font-semibold text-white mb-6">Quick Actions</h3>
       <div className="grid grid-cols-2 gap-4">
         {actions.map((action, index) => (
-          <button
+          <Button
             key={index}
             className={`${action.color} text-white p-4 rounded-lg transition-colors flex flex-col items-center space-y-2`}
           >
             <action.icon className="h-6 w-6" />
             <span className="text-sm font-medium">{action.title}</span>
-          </button>
+          </Button>
         ))}
       </div>
     </div>

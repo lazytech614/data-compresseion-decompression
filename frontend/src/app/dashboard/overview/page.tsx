@@ -38,15 +38,11 @@ export default function DashboardOverview() {
   function parseAnyDate(input: string): string | null {
     if (!input) return null;
     
-    // Try parsing as-is first
     const date = new Date(input);
     if (!isNaN(date.getTime())) {
-      console.log("🟢🟢 Returning from here");
       return date.toISOString().split('T')[0];
     }
     
-    // Then try your D/M/Y parsing
-    console.log("🟢🟢 Returning from there");
     return toISODateFromDMY(input);
   }
 
@@ -102,8 +98,6 @@ export default function DashboardOverview() {
       bucket[day].compressions++;
       bucket[day].bytesProcessed += Number(j.originalSize);
     });
-
-    console.log("BUcket", bucket);
 
     return Object.values(bucket)
       .sort((a,b) => a.date.localeCompare(b.date))
@@ -186,10 +180,6 @@ export default function DashboardOverview() {
       savingsPercentage: totalOriginal > 0 ? (totalSaved / totalOriginal) * 100 : 0,
     };
   }, [jobs]);
-
-  console.log("jobs", jobs);
-  console.log("usageData", usageData);
-  console.log("storageData", storageData);
 
   if (loading) {
     return (
