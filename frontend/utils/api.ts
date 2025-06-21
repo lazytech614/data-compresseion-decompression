@@ -3,7 +3,6 @@ import { toast } from "sonner";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE as string; 
 
-//TODO: update the formdata type
 export async function postCompression(formData: any) {
   try {
     const res = await fetch(`${API_BASE}/api/compress`, {
@@ -27,7 +26,6 @@ export async function postCompression(formData: any) {
                           responseData?.message || 
                           `HTTP ${res.status}: ${res.statusText}`;
       
-      // Create detailed error object
       const error = new Error(errorMessage);
       (error as any).status = res.status;
       (error as any).statusText = res.statusText;

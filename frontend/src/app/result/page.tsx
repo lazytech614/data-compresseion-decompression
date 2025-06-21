@@ -10,14 +10,15 @@ import CompressionStats from './_components/compression-stats';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { JobDetails } from '@/types';
 
-// Loading component for Suspense fallback
 const ResultPageLoading = () => (
-  <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center">
-    <p className="text-white">Loading...</p>
+  <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto"></div>
+      <p className="text-white mt-4 text-lg">Loading your result...</p>
+    </div>
   </div>
 );
 
-// Main component that uses useSearchParams
 const ResultPageContent = () => {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -31,9 +32,9 @@ const ResultPageContent = () => {
       router.replace('/')
       return
     }
-    // Fetch the job
-    ;(async () => {
+    (async () => {
       try {
+        setLoading(true)
         const res = await fetch(`/api/compression-jobs/${jobId}`)
         if (!res.ok) {
           const errJson = await res.json().catch(() => null)
@@ -50,12 +51,13 @@ const ResultPageContent = () => {
     })()
   }, [jobId, router])
 
-  console.log("Job: ", job);
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-white">Loading result…</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="text-white mt-4 text-lg">Loading your result...</p>
+        </div>
       </div>
     )
   }
@@ -75,7 +77,6 @@ const ResultPageContent = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
-      {/* Header */}
       <div className="bg-slate-800 border-b border-slate-700 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -94,17 +95,13 @@ const ResultPageContent = () => {
           </div>
         </div>
       </div>
-
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             <StatusCard job={job} />
             <FileDetailsCard job={job} />
             <PerformanceMetrics job={job} />
           </div>
-          
-          {/* Sidebar */}
           <div className="space-y-6">
             <QuickActions job={job} />
             <CompressionStats job={job} />
@@ -115,7 +112,6 @@ const ResultPageContent = () => {
   );
 };
 
-// Main exported component with Suspense wrapper
 const ResultPage = () => {
   return (
     <Suspense fallback={<ResultPageLoading />}>
