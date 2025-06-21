@@ -10,9 +10,7 @@ import {
 } from "lucide-react";
 
 const StatsCards = ({ jobs, usageData, storageData }: any) => {
-  console.log("jobs", jobs);
-  console.log("usageData", usageData);
-  console.log("storageData", storageData);
+
   const totalJobs = jobs.length;
   const completedJobs = jobs.filter((job: any) => job.status === 'COMPLETED').length;
   const avgCompressionRatio = jobs

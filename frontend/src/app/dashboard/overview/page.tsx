@@ -76,6 +76,7 @@ export default function DashboardOverview() {
     jobs.forEach(j => {
       const raw = j.startTime;
       const day = toISODateFromDMY(raw);
+      console.log(day);
       if (!day) {
         return;
       }
@@ -85,6 +86,8 @@ export default function DashboardOverview() {
       bucket[day].compressions++;
       bucket[day].bytesProcessed += Number(j.originalSize);
     });
+
+    console.log("BUcket", bucket);
 
     return Object.values(bucket)
       .sort((a,b) => a.date.localeCompare(b.date))
@@ -167,6 +170,10 @@ export default function DashboardOverview() {
       savingsPercentage: totalOriginal > 0 ? (totalSaved / totalOriginal) * 100 : 0,
     };
   }, [jobs]);
+
+  console.log("jobs", jobs);
+  console.log("usageData", usageData);
+  console.log("storageData", storageData);
 
   if (loading) {
     return (
