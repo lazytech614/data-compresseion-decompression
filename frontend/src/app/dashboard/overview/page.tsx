@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import StatsCards             from "./_components/stats-card";
-import UsageChart            from "./_components/usage-chart";
-import RecentJobs            from "./_components/recent-jobs";
+import StatsCards from "./_components/stats-card";
+import UsageChart from "./_components/usage-chart";
+import RecentJobs from "./_components/recent-jobs";
 import CompressionTypesChart from "./_components/compression-types-chart";
-import QuickActions           from "./_components/quick-actions";
+import QuickActions from "./_components/quick-actions";
+import CompressionEfficiencyChart from "./_components/compression-efficiency-chart";
+import ProcessingTimeAnalysis from "./_components/processing-time-analysis";
+import FileStorageOverview from "./_components/file-storage-overview";
+import PerformanceMetrics from "./_components/performance-matrics";
+import HeatmapActivity from "./_components/heatmap-activity";
 import { FILE_TYPE_COLORS } from "@/constants/pie-chart-colors";
 import { JobRecord, TypePoint } from "@/types";
 
@@ -13,7 +18,6 @@ export default function DashboardOverview() {
   const [jobs, setJobs] = useState<JobRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 1) Fetch user & jobs
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -29,7 +33,6 @@ export default function DashboardOverview() {
     })();
   }, []);
 
-  // 2) Derive usageData from jobs
   function toISODateFromDMY(input: string): string | null {
     const parts = input.split('/');
     if (parts.length !== 3) {
@@ -73,14 +76,12 @@ export default function DashboardOverview() {
       const raw = j.startTime;
       const day = toISODateFromDMY(raw);
       if (!day) {
-        // skip or handle invalid date
         return;
       }
       if (!bucket[day]) {
         bucket[day] = { date: day, compressions: 0, bytesProcessed: 0 };
       }
       bucket[day].compressions++;
-      // ⬇️ cast to number here!
       bucket[day].bytesProcessed += Number(j.originalSize);
     });
 
@@ -89,12 +90,10 @@ export default function DashboardOverview() {
       .map(d => ({
         date: d.date,
         compressions:  d.compressions,
-        // Convert bytes → MB so your chart works in reasonable units
         dataProcessed: +(d.bytesProcessed / (1024*1024)).toFixed(1),
       }));
   }, [jobs]);
 
-  // 3) Derive compressionTypeData from jobs
   function categorizeMime(mime: string | undefined): string {
     if (!mime) return "Unknown";
     if (mime.startsWith("image/"))       return "Photo";
@@ -115,40 +114,104 @@ export default function DashboardOverview() {
     const counts: Record<string, number> = {};
 
     jobs.forEach((j) => {
-      // grab the first input file's mimeType
       const mime = j.inputFiles[0]?.mimeType;
       const category = categorizeMime(mime);
-
       counts[category] = (counts[category] || 0) + 1;
     });
 
     return Object.entries(counts).map(([name, value]) => ({
       name,
       value,
-      color: FILE_TYPE_COLORS[name] || "#D1D5DB", // Fallback gray if unknown
+      color: FILE_TYPE_COLORS[name] || "#D1D5DB",
     }));
   }, [jobs]);
 
+  const compressionEfficiencyData = useMemo(() => {
+    return jobs
+      .filter(j => j.compressionRatio && j.status === 'COMPLETED')
+      .map(j => ({
+        name: j.inputFiles[0]?.originalName?.substring(0, 15) + '...' || 'Unknown',
+        originalSize: Number(j.originalSize) / (1024*1024), // MB
+        compressedSize: Number(j.compressedSize) / (1024*1024), // MB
+        compressionRatio: j.compressionRatio! * 100,
+        savings: ((Number(j.originalSize) - Number(j.compressedSize)) / (1024*1024)),
+      }))
+      .slice(0, 10);
+  }, [jobs]);
+
+  const processingTimeData = useMemo(() => {
+    return jobs
+      .filter(j => j.duration && j.status === 'COMPLETED')
+      .map(j => {
+        const fileSize = Number(j.originalSize) / (1024*1024); 
+        const duration = j.duration! / 1000; 
+        return {
+          fileSize: fileSize,
+          duration: duration,
+          throughput: fileSize / duration, 
+          type: categorizeMime(j.inputFiles[0]?.mimeType),
+        };
+      });
+  }, [jobs]);
+
+  const storageData = useMemo(() => {
+    const totalOriginal = jobs.reduce((acc, j) => acc + Number(j.originalSize || 0), 0);
+    const totalCompressed = jobs.reduce((acc, j) => acc + Number(j.compressedSize || 0), 0);
+    const totalSaved = totalOriginal - totalCompressed;
+
+    return {
+      original: totalOriginal / (1024*1024),
+      compressed: totalCompressed / (1024*1024),
+      saved: totalSaved / (1024*1024),
+      savingsPercentage: totalOriginal > 0 ? (totalSaved / totalOriginal) * 100 : 0,
+    };
+  }, [jobs]);
+
   if (loading) {
-    return <div className="p-8 text-white">Loading your dashboard…</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="text-white mt-4 text-lg">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
   }
 
-  console.log("jobs", jobs);
-  console.log("usageData", usageData);
   return (
-    <div className="min-h-screen bg-slate-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-        <StatsCards jobs={jobs} usageData={usageData} />
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">Compression Dashboard</h1>
+          <p className="text-slate-400">Monitor your file compression analytics and performance</p>
+        </div>
+        <StatsCards jobs={jobs} usageData={usageData} storageData={storageData} />
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 mb-8">
+          <div className="xl:col-span-8">
             <UsageChart data={usageData} />
+          </div>
+          <div className="xl:col-span-4">
+            <CompressionTypesChart data={compressionTypeData} />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-8">
+          <CompressionEfficiencyChart data={compressionEfficiencyData} />
+          <ProcessingTimeAnalysis data={processingTimeData} />
+          <FileStorageOverview data={storageData} />
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 mb-8">
+          <div className="xl:col-span-5">
+            <PerformanceMetrics jobs={jobs} />
+          </div>
+          {/* <div className="xl:col-span-2">
+            <HeatmapActivity jobs={jobs} />
+          </div> */}
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+          <div className="xl:col-span-3">
             <RecentJobs jobs={jobs} />
           </div>
-
-          <div className="space-y-8">
-            <CompressionTypesChart data={compressionTypeData} />
+          <div className="xl:col-span-1">
             <QuickActions />
           </div>
         </div>

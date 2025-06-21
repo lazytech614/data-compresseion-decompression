@@ -1,9 +1,14 @@
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { 
+  Cell, 
+  Pie, 
+  PieChart, 
+  ResponsiveContainer, 
+  Tooltip 
+} from "recharts";
 
 const CompressionTypesChart = ({ data }: any) => {
   const totalItems = data.reduce((total: any, item: any) => total + item.value, 0);
 
-  // Guard: if no data or total is zero, render a placeholder or nothing
   if (!data || data.length === 0 || totalItems === 0) {
     return (
       <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
@@ -47,19 +52,16 @@ const CompressionTypesChart = ({ data }: any) => {
       </div>
       <div className="grid grid-cols-2 gap-4 mt-4">
         {(() => {
-          // Step 1: calculate raw percentages
           const percentages = data?.map((item: any) => ({
             ...item,
             rawPercent: (item.value / totalItems) * 100,
           }));
 
-          // Step 2: floor the values
           const rounded = percentages?.map((p: any) => ({
             ...p,
             displayPercent: Math.floor(p.rawPercent),
           }));
 
-          // Step 3: add back the difference to make total 100%
           const remaining = 100 - rounded.reduce((sum: any, item: any) => sum + item.displayPercent, 0);
 
           const sorted = [...percentages]
