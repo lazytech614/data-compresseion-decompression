@@ -437,28 +437,28 @@ Response:
 | **Huffman Coding** | Entropy | Text files, source code | High (0.60-0.80) | Fast | Low |
 | **LZ77** | Dictionary | General purpose files | Medium (0.45-0.65) | Medium | Medium |
 | **LZW** | Dictionary | Images, binaries | Medium-High (0.50-0.70) | Fast | Medium |
-| **DEFLATE** | Hybrid | Web content, archives | High (0.55-0.75) | Medium | Medium |
+| **RLE** | Run Leangth | Images, Simple patterns | Variable (0.30-0.90) | Very Fast | Very Low |
 
 ### Algorithm Performance Comparison
 
 ```
 Compression Ratio (Higher is better)
 ████████████████████████████████████████ Huffman (0.65)
-██████████████████████████████████ DEFLATE (0.62)
+██████████████████████████████████ RLE (0.62)
 ███████████████████████████████ LZW (0.58)
 ███████████████████████████ LZ77 (0.52)
 
 Processing Speed (Higher is better)
 ████████████████████████████████████████ LZW (52ms avg)
 ██████████████████████████████████ LZ77 (48ms avg)
-███████████████████████████████ DEFLATE (41ms avg)
+███████████████████████████████ RLE (41ms avg)
 ███████████████████████ Huffman (35ms avg)
 
 Memory Efficiency (Lower is better)
 ███████████████████████ Huffman (1.2MB avg)
 ███████████████████████████ LZ77 (1.8MB avg)
 ██████████████████████████████ LZW (2.1MB avg)
-████████████████████████████████████ DEFLATE (2.4MB avg)
+████████████████████████████████████ RLE (2.4MB avg)
 ```
 
 ## 🎨 Key Components
@@ -1504,44 +1504,6 @@ We believe in recognizing our contributors:
 - **Special Mentions**: Outstanding contributions get special recognition
 - **Early Access**: Get early access to new features
 
-### Code of Conduct
-
-We are committed to providing a welcoming and inclusive environment for all contributors. Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before participating.
-
-**Our Pledge:**
-- Be respectful and inclusive
-- Welcome newcomers and help them get started
-- Focus on constructive feedback
-- Maintain a positive and professional tone
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-```
-MIT License
-
-Copyright (c) 2024 LazyTech614
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
 ## 🙏 Acknowledgments
 
 ### Technology Stack
@@ -1562,36 +1524,6 @@ SOFTWARE.
 - **Accessibility Guidelines**: Implementing WCAG 2.1 standards
 - **User Feedback**: Incorporating user suggestions and feedback
 
-### Open Source Community
-- **Contributors**: Everyone who has contributed code, documentation, or feedback
-- **Issue Reporters**: Users who help identify and report bugs
-- **Feature Requesters**: Community members who suggest new features
-- **Testers**: Beta testers who help ensure quality
-
-### Special Thanks
-- **LazyTech614**: For creating and maintaining this project
-- **Early Contributors**: The first contributors who helped shape the project
-- **Community Moderators**: Those who help maintain a positive community
-
-## 📞 Support & Community
-
-### Getting Help
-
-**Community Support:**
-- **GitHub Discussions**: [Join our community discussions](https://github.com/lazytech614/data-compresseion-decompression/discussions)
-- **GitHub Issues**: [Report bugs or request features](https://github.com/lazytech614/data-compresseion-decompression/issues)
-- **Discord Server**: [Join our Discord community](https://discord.gg/compressflow) (Coming Soon)
-
-**Documentation:**
-- **API Reference**: [Complete API documentation](https://docs.compressflow.dev)
-- **User Guide**: [Step-by-step user guide](https://guide.compressflow.dev)
-- **Developer Docs**: [Development documentation](https://dev.compressflow.dev)
-
-**Professional Support:**
-- **Consulting**: Available for enterprise implementations
-- **Custom Development**: Specialized algorithm development
-- **Training**: Team training and workshops
-
 ### FAQ
 
 **Q: What file types are supported?**
@@ -1602,9 +1534,6 @@ A: The default limit is 10MB for the hosted version. Self-hosted instances can c
 
 **Q: Can I use CompressFlow commercially?**
 A: Yes! CompressFlow is licensed under MIT License, allowing commercial use.
-
-**Q: How do I add a new compression algorithm?**
-A: Follow our [Algorithm Development Guide](ALGORITHM_GUIDE.md) for step-by-step instructions.
 
 **Q: Is my data secure?**
 A: Yes, files are processed locally in your browser or on your server. No data is stored permanently.
