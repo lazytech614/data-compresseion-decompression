@@ -33,7 +33,14 @@ const CompressVisualizePortal = () => {
   }, []);
 
   const renderTabContent = () => {
-    if (loading) return <div className="text-white p-4">Loading stats…</div>;
+    if (loading) return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="text-white mt-4 text-lg">Loading your result...</p>
+        </div>
+      </div>
+    );
     if (error) return <div className="text-red-400 p-4">Error: {error}</div>;
 
     switch (activeTab) {
