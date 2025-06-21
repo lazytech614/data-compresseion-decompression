@@ -66,7 +66,6 @@ export const onAuthenticateUser = async () => {
         })
 
         if(userExists) {
-            console.log("🟢User exists", userExists);
             return { status: 200, message: "User exists", data: userExists }
         }
 
@@ -82,7 +81,6 @@ export const onAuthenticateUser = async () => {
         })
 
         if(newUser) {
-            console.log("🟢User created", newUser);
             await incrementUserCountInSystemStats();
             return { status: 201, message: "User created", data: newUser }
         }

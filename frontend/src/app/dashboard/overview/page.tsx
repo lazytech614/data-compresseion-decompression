@@ -13,6 +13,8 @@ import PerformanceMetrics from "./_components/performance-matrics";
 import HeatmapActivity from "./_components/heatmap-activity";
 import { FILE_TYPE_COLORS } from "@/constants/pie-chart-colors";
 import { JobRecord, TypePoint } from "@/types";
+import Link from "next/link";
+import { ZapOff } from "lucide-react";
 
 export default function DashboardOverview() {
   const [jobs, setJobs] = useState<JobRecord[]>([]);
@@ -32,6 +34,12 @@ export default function DashboardOverview() {
       }
     })();
   }, []);
+
+  // if(!jobs || jobs.length == 0) return (
+  //   <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      
+  //   </div>
+  // )
 
   function toISODateFromDMY(input: string): string | null {
     const parts = input.split('/');
@@ -113,7 +121,7 @@ export default function DashboardOverview() {
   const compressionTypeData: TypePoint[] = useMemo(() => {
     const counts: Record<string, number> = {};
 
-    jobs.forEach((j) => {
+    jobs?.forEach((j) => {
       const mime = j.inputFiles[0]?.mimeType;
       const category = categorizeMime(mime);
       counts[category] = (counts[category] || 0) + 1;
@@ -127,7 +135,7 @@ export default function DashboardOverview() {
   }, [jobs]);
 
   const compressionEfficiencyData = useMemo(() => {
-    return jobs
+    return jobs!
       .filter(j => j.compressionRatio && j.status === 'COMPLETED')
       .map(j => ({
         name: j.inputFiles[0]?.originalName?.substring(0, 15) + '...' || 'Unknown',
@@ -140,7 +148,7 @@ export default function DashboardOverview() {
   }, [jobs]);
 
   const processingTimeData = useMemo(() => {
-    return jobs
+    return jobs!
       .filter(j => j.duration && j.status === 'COMPLETED')
       .map(j => {
         const fileSize = Number(j.originalSize) / (1024*1024); 
@@ -155,8 +163,8 @@ export default function DashboardOverview() {
   }, [jobs]);
 
   const storageData = useMemo(() => {
-    const totalOriginal = jobs.reduce((acc, j) => acc + Number(j.originalSize || 0), 0);
-    const totalCompressed = jobs.reduce((acc, j) => acc + Number(j.compressedSize || 0), 0);
+    const totalOriginal = jobs?.reduce((acc, j) => acc + Number(j.originalSize || 0), 0);
+    const totalCompressed = jobs?.reduce((acc, j) => acc + Number(j.compressedSize || 0), 0);
     const totalSaved = totalOriginal - totalCompressed;
 
     return {
@@ -174,6 +182,18 @@ export default function DashboardOverview() {
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto"></div>
           <p className="text-white mt-4 text-lg">Loading your dashboard...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (!jobs || jobs.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center text-center text-slate-300 space-y-4">
+        <ZapOff className="w-12 h-12" />
+        <h2 className="text-xl font-semibold">No Data Found</h2>
+        <p className="text-sm text-slate-400 max-w-sm">
+          You haven't run any compression tasks yet. <Link className="underline text-blue-500" href={'/'}>Upload a file or start a job to see analytics here.</Link>
+        </p>
       </div>
     );
   }
